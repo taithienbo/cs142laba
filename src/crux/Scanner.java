@@ -99,7 +99,7 @@ public class Scanner implements Iterable<Token> {
 
 	
 
-	@Override
+
 	public Iterator<Token> iterator() {
 		// TODO Auto-generated method stub
 		return null;
