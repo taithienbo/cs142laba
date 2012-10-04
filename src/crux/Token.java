@@ -49,7 +49,7 @@ public class Token
 
 		// TODO: complete the list of possible tokens
 
-		private String default_lexeme;
+		public String default_lexeme;
 
 		Kind()
 		{
@@ -65,11 +65,7 @@ public class Token
 		{
 			return default_lexeme != null;
 		}
-		
-		public void setLexeme (String lexeme)
-		{
-			default_lexeme = lexeme;
-		}
+	
 			
 		// OPTIONAL: if you wish to also make convenience functions, feel free
 		//           for example, boolean matches(String lexeme)
@@ -89,7 +85,167 @@ public class Token
 		return tok;
 	}
 	 
+	public static Token OPEN_PAREN (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.OPEN_PAREN;
+		return tok;
+	}
 	
+	
+	public static Token CLOSE_PAREN (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.CLOSE_PAREN;
+		return tok;
+	}
+	
+	
+	public static Token OPEN_BRACE (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.OPEN_PAREN;
+		return tok;
+	}
+	
+	public static Token CLOSE_BRACE (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.CLOSE_BRACE;
+		return tok;
+	}
+
+	public static Token OPEN_BRACKET (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.OPEN_BRACKET;
+		return tok;
+	}
+	
+	
+	public static Token CLOSE_BRACKET (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.CLOSE_BRACKET;
+		return tok;
+	}
+	
+	public static Token ADD (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.ADD;
+		return tok;
+	}
+	
+	
+	public static Token SUB (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.SUB;
+		return tok;
+	}
+	
+	public static Token MUL (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.MUL;
+		return tok;
+	}
+	
+	
+	public static Token DIV (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.DIV;
+		return tok;
+	}
+	
+	public static Token GREATER_EQUAL (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.GREATER_EQUAL;
+		return tok;
+	}
+	
+	
+	public static Token LESSER_EQUAL (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.LESSER_EQUAL;
+		return tok;
+	}
+	
+	
+	public static Token NOT_EQUAL (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.NOT_EQUAL;
+		return tok;
+	}
+	
+	
+	public static Token EQUAL (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.EQUAL;
+		return tok;
+	}
+	
+	
+	public static Token GREATER_THAN (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.GREATER_THAN;
+		return tok;
+	}
+	
+	
+	public static Token LESSER_THAN (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.LESSER_THAN;
+		return tok;
+	}
+	
+	
+	public static Token ASSIGN (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.ASSIGN;
+		return tok;
+	}
+	
+	
+	public static Token COMMA (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.COMMA;
+		return tok;
+	}
+	
+	
+	public static Token SEMICOLON (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.SEMICOLON;
+		return tok;
+	}
+	
+	
+	public static Token COLON (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.COLON;
+		return tok;
+	}
+	
+	
+	public static Token CALL (int linePos, int charPos)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.CALL;
+		return tok;
+	}
 
 	private Token(int lineNum, int charPos)
 	{
@@ -101,7 +257,7 @@ public class Token
 		this.lexeme = "No Lexeme Given";
 	}
 	
-	
+
 	private boolean isFloat (String lexeme)
 	{
 		try
@@ -194,6 +350,13 @@ public class Token
 				|| c == 'Y' || c == 'Z';
 	}
 	
+	public Token (Kind kind, int lineNum, int charPos)
+	{
+		this.kind = kind;
+		this.lineNum = lineNum;
+		this.charPos = charPos;
+		
+	}
 	public Token(String lexeme, int lineNum, int charPos)
 	{
 		this.lineNum = lineNum;
