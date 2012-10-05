@@ -76,6 +76,8 @@ public class Token
 	private int charPos;
 	Kind kind;
 	private String lexeme = "";
+	
+	private static final String UNEXPECTED_CHARACTER = "Unexpected character";
 
 	// OPTIONAL: implement factory functions for some tokens, as you see fit           
 	public static Token EOF(int linePos, int charPos)
@@ -92,7 +94,14 @@ public class Token
 		return tok;
 	}
 	
-	
+	public static Token ERROR (int linePos, int charPos, 
+			String errorChar)
+	{
+		Token tok = new Token (linePos, charPos);
+		tok.kind = Kind.ERROR;
+		tok.lexeme = errorChar;
+		return tok;
+	}
 	public static Token CLOSE_PAREN (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
@@ -477,18 +486,26 @@ public class Token
 		// TODO: implement this
 		StringBuilder result 
 				= new StringBuilder (this.kind.name());
-		if (kind == Kind.FLOAT || kind == Kind.INTEGER)
-			result.append("(" + lexeme + ")");
+
+		if (kind == Kind.ERROR)
+			result.append(toStringError());
 		
-		result.append("(").append("lineNum:")
-				.append(lineNum).append(",")
-				.append(" charPos:")
-				.append(charPos)
-				.append(")");
+		result.append(toStringCharPosition());
 		
 		return result.toString();
 	}
 
+	
+	private String toStringCharPosition ()
+	{
+		return "(lineNum:" + lineNum + ", charPos:" 
+				 + charPos + ")";  
+	}
+
+	private String toStringError ()
+	{
+		return "(" + UNEXPECTED_CHARACTER + ": " + lexeme + ")";
+	}
 	// OPTIONAL: function to query a token about its kind
 	//           boolean is(Token.Kind kind)
 
