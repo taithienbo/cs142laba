@@ -116,7 +116,7 @@ public class Token
 	public static Token OPEN_BRACE (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
-		tok.kind = Kind.OPEN_PAREN;
+		tok.kind = Kind.OPEN_BRACE;
 		return tok;
 	}
 
@@ -390,13 +390,12 @@ public class Token
 	
 	
 	
-	public Token(String lexeme, int lineNum, int charPos)
+	public static Token IDENTIFIER (String lexeme, int lineNum, int charPos)
 	{
-		this.lineNum = lineNum;
-		this.charPos = charPos;
-		this.lexeme = lexeme;
-
-
+		Token tok = new Token (lineNum, charPos);
+		tok.kind = Kind.IDENTIFIER;
+		tok.lexeme = lexeme;
+		return tok;
 	}
 
 	public int lineNumber()
@@ -424,8 +423,9 @@ public class Token
 
 		if (kind == Kind.ERROR)
 			result.append(toStringError());
-		else if (kind == Kind.INTEGER || kind == Kind.FLOAT)
-			result.append (toStringNumber ());
+		else if (kind == Kind.INTEGER || kind == Kind.FLOAT
+				|| kind == Kind.IDENTIFIER)
+			result.append (toStringLexeme ());
 		
 		result.append(toStringCharPosition());
 
@@ -433,7 +433,7 @@ public class Token
 	}
 
 
-	private String toStringNumber ()
+	private String toStringLexeme ()
 	{
 		return "(" + lexeme + ")";
 	}

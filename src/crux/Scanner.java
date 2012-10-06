@@ -45,9 +45,9 @@ public class Scanner implements Iterable<Token> {
 		// before returning nextChar
 		if (nextChar == -1)	// EOF
 			return -1;
-
-		nextChar = input.read();
 		updateCharPosition();
+		nextChar = input.read();
+
 		return nextChar;
 	}
 
@@ -57,10 +57,8 @@ public class Scanner implements Iterable<Token> {
 		//	System.out.println("skipBlankSpace()," +
 		//			" nextChar: " + nextChar);
 		while (isBlank (nextChar))
-		{
-			nextChar = input.read ();
-			updateCharPosition ();		
-		}
+			nextChar = readChar ();
+		
 	}
 
 
@@ -81,10 +79,22 @@ public class Scanner implements Iterable<Token> {
 		if (nextChar == 10)
 		{
 			lineNum++;
-			charPos = 0;
+			charPos = 1;
 		}
 		else
 			charPos++;
+	}
+	
+	
+	private void skipCommands() throws IOException
+	{
+		while ( nextChar  != 10)	// per ASCII table, 10 is the linefeed 
+		{
+			nextChar = readChar ();
+		}
+		
+
+		
 	}
 	/* Invariants:
 	 *  1. call assumes that nextChar is already holding an unread character
@@ -96,8 +106,23 @@ public class Scanner implements Iterable<Token> {
 
 		if (nextChar == -1)	// check for EOF 
 			return Token.EOF (lineNum, charPos);
-
-
+		
+		if ( (char) nextChar == '/') 	// check commands
+		{
+			do
+			{
+				nextChar = readChar ();
+				if (nextChar == '/')
+				{
+					skipCommands ();
+					skipBlankSpace ();
+				}
+				else
+					return Token.ERROR (lineNum, charPos, "/" );
+			} while ((char) nextChar == '/');
+		
+			
+		}
 		// TODO: implement this
 
 		int lineNum = this.lineNum;
@@ -132,6 +157,7 @@ public class Scanner implements Iterable<Token> {
 			break;
 		case '+':
 			token = Token.ADD(lineNum, charPos);
+			nextChar = readChar ();
 			break;
 		case '-':
 			token = Token.SUB(lineNum, charPos);
@@ -257,7 +283,14 @@ public class Scanner implements Iterable<Token> {
 			else
 				return Token.COLON (lineNum, charPos);
 		default:
-			return parseIdentifier (lineNum, charPos);
+			if (isValidIdentifierCharacter ((char) nextChar))
+				return parseIdentifier (lineNum, charPos);
+			else
+			{
+				String lexeme = "" + (char) nextChar;
+				nextChar = readChar ();
+				return Token.ERROR (lineNum, charPos, lexeme);
+			}
 		}
 	}
 
@@ -268,50 +301,298 @@ public class Scanner implements Iterable<Token> {
 		{
 		case 'a':
 			nextChar = readChar ();
-			if (((char) nextChar ) == 'n')		// check for Kind.AND
+			if ((char) nextChar  == 'n')		// check for Kind.AND
 			{
 				lexeme += (char) nextChar;
 				nextChar = readChar ();
-				if (((char) nextChar) == 'd')
+				if ((char) nextChar == 'd')
 				{
 					lexeme += (char) nextChar;
 					nextChar = readChar ();
-					return new Token (Token.Kind.AND, lineNum, charPos);
+					if (isBlank (nextChar))
+						return new Token (Token.Kind.AND, lineNum, charPos);
 				}
 			}
-			else if (((char) nextChar) == 'a')	// check for Kind.ARRAY
+			else if ((char) nextChar == 'r')	// check for Kind.ARRAY
 			{
+				lexeme += (char) nextChar ;
 				nextChar = readChar ();
-				if (((char) nextChar) == 'r')
+				if ((char) nextChar == 'r')
+				{
+					lexeme += (char) nextChar;
+					nextChar = readChar ();
+					if ((char) nextChar  == 'a')
+					{
+						lexeme += (char) nextChar;
+						nextChar = readChar ();
+						if ((char) nextChar == 'y')
+						{
+							lexeme += (char) nextChar;
+							nextChar = readChar ();
+							if (isBlank (nextChar))
+								return new Token (Kind.ARRAY, lineNum, charPos);	
+						}
+					}
+				}
+			}
+			break;
+
+		case 'o':
+			nextChar = readChar ();
+			if ((char)nextChar == 'r')
+			{
+				lexeme += (char) nextChar;
+				nextChar = readChar ();
+				if (isBlank (nextChar))
+					return new Token (Kind.OR, lineNum, charPos);
+			}
+			break;
+		case 'n':	// kind.NOT
+			nextChar = readChar ();
+			if ((char) nextChar == 'o')
+			{
+				lexeme += (char) nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 't')
+				{
+					lexeme += (char) nextChar;
+					nextChar = readChar ();
+					if (isBlank (nextChar))
+						return new Token (Kind.NOT, lineNum, charPos);
+				}
+			}
+			break;
+		case 'l':	// Kind.LET
+			nextChar = readChar ();
+			if ((char) nextChar == 'e')
+			{
+				lexeme += (char) nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 't')
+				{
+					lexeme += (char) nextChar;
+					nextChar = readChar ();
+					if (isBlank (nextChar))
+						return new Token (Kind.LET, lineNum, charPos);
+				}
+			}
+			break;
+		case 'v': 	// Kind.VAR
+			nextChar = readChar ();
+			if ((char) nextChar == 'a')
+			{
+				lexeme += nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 'r')
 				{
 					lexeme += nextChar;
-					nextChar = readChar ();
-					if (((char) nextChar == 'r'))
+					nextChar = readChar();
+					if (isBlank (nextChar))
+						return new Token (Kind.VAR, lineNum, charPos);
+				}
+			}
+			break;
+		case 'f':		// Kind.FUNC or Kind.FALSE
+			nextChar = readChar ();
+			if ((char) nextChar == 'u')
+			{
+				lexeme += nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 'n')
+				{
+					lexeme += nextChar;
+					nextChar = readChar();
+					if ((char) nextChar == 'c')
 					{
 						lexeme += nextChar;
 						nextChar = readChar ();
-						if (((char) nextChar ) == 'a')
+						if (isBlank (nextChar))
+							return new Token (Kind.FUNC, lineNum, charPos);
+					}
+				}
+			}
+			else if ((char) nextChar == 'a')		// Kind.False
+			{
+				nextChar = readChar ();
+				if ((char) nextChar == 'l')
+				{
+					lexeme += nextChar;
+					nextChar = readChar ();
+					if ((char) nextChar == 's')
+					{
+						lexeme += nextChar;
+						nextChar = readChar();
+						if ((char) nextChar == 'e')
 						{
 							lexeme += nextChar;
 							nextChar = readChar ();
-							if (((char) nextChar) == 'y')
+							if (isBlank (nextChar))
+								return new Token (Kind.FALSE, lineNum, charPos);
+						}
+					}
+				}
+			}
+			break;
+		case 'i':	// Kind.If
+			nextChar = readChar ();
+			if ((char) nextChar == 'f')
+			{
+				lexeme += nextChar;
+				nextChar = readChar();
+				if (isBlank (nextChar))
+					return new Token (Kind.IF, lineNum, charPos);
+			}
+			break;
+		case 'e':	// Kind.ELSE
+			nextChar = readChar();
+			if ((char) nextChar == 'l')
+			{
+				lexeme += nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 's')
+				{
+					lexeme += nextChar;
+					nextChar = readChar();
+					if ((char) nextChar == 'e')
+					{
+						lexeme += nextChar;
+						nextChar = readChar ();
+						if (isBlank (nextChar))
+							return new Token (Kind.ELSE, lineNum, charPos);
+					}
+				}
+			}
+			break;
+		case 'w' :	// Kind.While 
+			nextChar = readChar ();
+			if ((char) nextChar == 'h')
+			{
+				lexeme += nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 'i')
+				{
+					lexeme += nextChar;
+					nextChar = readChar();
+					if ((char) nextChar == 'l')
+					{
+						lexeme += nextChar;
+						nextChar = readChar ();
+						if ((char) nextChar == 'e')
+						{
+							lexeme += nextChar;
+							nextChar = readChar ();
+							if (isBlank (nextChar))
+								return new Token (Kind.WHILE, lineNum, charPos);
+						}
+					}
+				}
+			}
+			break;
+		case 't'	:	// Kind.TRUE
+			nextChar = readChar();
+			if ((char) nextChar == 'r')
+			{
+				lexeme += nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 'u')
+				{
+					lexeme += nextChar;
+					nextChar = readChar();
+					if ((char) nextChar == 'e')
+					{
+						lexeme += nextChar;
+						nextChar = readChar ();
+						if (isBlank (nextChar))
+							return new Token (Kind.TRUE, lineNum, charPos);
+					}
+				}
+			}
+			break;
+		case 'r':		// Kind.RETURN 
+			nextChar = readChar();
+			if ((char) nextChar == 'e')
+			{
+				lexeme += nextChar;
+				nextChar = readChar ();
+				if ((char) nextChar == 't')
+				{
+					lexeme += nextChar;
+					nextChar = readChar();
+					if ((char) nextChar == 'u')
+					{
+						lexeme += nextChar;
+						nextChar = readChar ();
+						if ((char) nextChar == 'r')
+						{
+							lexeme += nextChar;
+							nextChar = readChar ();
+							if ((char) nextChar == 'n')
 							{
-								lexeme +=nextChar;
+								lexeme += nextChar;
 								nextChar = readChar ();
-								return new Token (Kind.ARRAY, lineNum, charPos);
+								if (isBlank (nextChar))
+									return new Token (Kind.RETURN, lineNum, charPos);
 							}
 						}
 					}
 				}
 			}
-	
+			break;
+		default:	// regular identifier 
+			nextChar = readChar ();
+			while (isValidIdentifierCharacter ((char) nextChar))
+			{
+				lexeme += (char) nextChar;
+				nextChar = readChar ();
+			}
+			return Token.IDENTIFIER (lexeme, lineNum, charPos);
 		}
-		String lexeme = "" + (char) nextChar;
+		
+		// if nothing has been return, then this must be an identifier 
+		// even though it may contains keywords (EX: 'andfur')
+		while (isValidIdentifierCharacter ((char) nextChar))
+				{
+					lexeme += (char) nextChar;
+					nextChar = readChar ();
+				}
+		return Token.IDENTIFIER (lexeme, lineNum, charPos);
+	}
 
-		nextChar = readChar();
 
-		return Token.ERROR (lineNum, charPos, lexeme);
+	private boolean isValidIdentifierCharacter (char character)
+	{
+		// IDENTIFIER	("_" | letter) { "_" | letter | digit }
+		return character == '_' || isLetter (character) || isNumber (character);
+	}
 
+
+	private boolean isLetter (char c)
+	{
+		return isLowerCaseLetter (c) || isUpperCaseLetter (c);
+	}
+
+
+	private boolean isLowerCaseLetter (char c)
+	{
+		return c == 'a' || c == 'b' || c == 'c' || c == 'd'
+				|| c == 'e' || c == 'f' || c == 'g' || c == 'h'
+				|| c == 'i' || c == 'j' || c == 'k' || c == 'l'
+				|| c == 'm' || c == 'n' || c == 'o' || c == 'p'
+				|| c == 'q' || c == 'r' || c == 's' || c == 't'
+				|| c == 'u' || c == 'v' || c == 'w' || c == 'x'
+				|| c == 'y' || c == 'z';
+	}
+
+
+	private boolean isUpperCaseLetter (char c)
+	{
+		return c == 'A' || c == 'B' || c == 'C' || c == 'D'
+				|| c == 'E' || c == 'F' || c == 'G' || c == 'H'
+				|| c == 'I' || c == 'J' || c == 'K' || c == 'L'
+				|| c == 'M' || c == 'N' || c == 'O' || c == 'P'
+				|| c == 'Q' || c == 'R' || c == 'S' || c == 'T'
+				|| c == 'U' || c == 'V' || c == 'W' || c == 'X'
+				|| c == 'Y' || c == 'Z';
 	}
 
 
