@@ -34,7 +34,7 @@ public class Token
 		NOT_EQUAL ("!="),
 		EQUAL ("=="),
 		GREATER_THAN (">"),
-		LESSER_THAN ("<"),
+		LESS_THAN ("<"),
 		ASSIGN ("="),
 		COMMA (","),
 		SEMICOLON (";"),
@@ -65,8 +65,8 @@ public class Token
 		{
 			return default_lexeme != null;
 		}
-	
-			
+
+
 		// OPTIONAL: if you wish to also make convenience functions, feel free
 		//           for example, boolean matches(String lexeme)
 		//           can report whether a Token.Kind has the given lexeme
@@ -76,7 +76,7 @@ public class Token
 	private int charPos;
 	Kind kind;
 	private String lexeme = "";
-	
+
 	private static final String UNEXPECTED_CHARACTER = "Unexpected character";
 
 	// OPTIONAL: implement factory functions for some tokens, as you see fit           
@@ -86,14 +86,17 @@ public class Token
 		tok.kind = Kind.EOF;
 		return tok;
 	}
-	 
+
+	
+	
+	
 	public static Token OPEN_PAREN (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.OPEN_PAREN;
 		return tok;
 	}
-	
+
 	public static Token ERROR (int linePos, int charPos, 
 			String errorChar)
 	{
@@ -108,15 +111,15 @@ public class Token
 		tok.kind = Kind.CLOSE_PAREN;
 		return tok;
 	}
-	
-	
+
+
 	public static Token OPEN_BRACE (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.OPEN_PAREN;
 		return tok;
 	}
-	
+
 	public static Token CLOSE_BRACE (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
@@ -130,125 +133,125 @@ public class Token
 		tok.kind = Kind.OPEN_BRACKET;
 		return tok;
 	}
-	
-	
+
+
 	public static Token CLOSE_BRACKET (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.CLOSE_BRACKET;
 		return tok;
 	}
-	
+
 	public static Token ADD (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.ADD;
 		return tok;
 	}
-	
-	
+
+
 	public static Token SUB (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.SUB;
 		return tok;
 	}
-	
+
 	public static Token MUL (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.MUL;
 		return tok;
 	}
-	
-	
+
+
 	public static Token DIV (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.DIV;
 		return tok;
 	}
-	
+
 	public static Token GREATER_EQUAL (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.GREATER_EQUAL;
 		return tok;
 	}
-	
-	
+
+
 	public static Token LESSER_EQUAL (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.LESSER_EQUAL;
 		return tok;
 	}
-	
-	
+
+
 	public static Token NOT_EQUAL (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.NOT_EQUAL;
 		return tok;
 	}
-	
-	
+
+
 	public static Token EQUAL (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.EQUAL;
 		return tok;
 	}
-	
-	
+
+
 	public static Token GREATER_THAN (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.GREATER_THAN;
 		return tok;
 	}
-	
-	
+
+
 	public static Token LESSER_THAN (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
-		tok.kind = Kind.LESSER_THAN;
+		tok.kind = Kind.LESS_THAN;
 		return tok;
 	}
-	
-	
+
+
 	public static Token ASSIGN (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.ASSIGN;
 		return tok;
 	}
-	
-	
+
+
 	public static Token COMMA (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.COMMA;
 		return tok;
 	}
-	
-	
+
+
 	public static Token SEMICOLON (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.SEMICOLON;
 		return tok;
 	}
-	
-	
+
+
 	public static Token COLON (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
 		tok.kind = Kind.COLON;
 		return tok;
 	}
-	
-	
+
+
 	public static Token CALL (int linePos, int charPos)
 	{
 		Token tok = new Token (linePos, charPos);
@@ -265,7 +268,7 @@ public class Token
 		this.kind = Kind.ERROR;
 		this.lexeme = "No Lexeme Given";
 	}
-	
+
 
 	private boolean isFloat (String lexeme)
 	{
@@ -279,8 +282,8 @@ public class Token
 			return false;
 		}
 	}
-	
-	
+
+
 	private boolean isInteger (String lexeme)
 	{
 		try
@@ -294,17 +297,17 @@ public class Token
 		}
 	}
 
-	
+
 	private boolean isIdentifier (String lexeme)
 	{
 		// per the doc, IDENTIFIER: 
 		// ("_"|letter){"_"|letter|digit}
 		char[] chars = lexeme.toCharArray();
-		
+
 		if (chars.length == 0)	// empty string
 			return false;
 		else if (chars[0] != '_' 
-					|| !isLetter (chars[0]))
+				|| !isLetter (chars[0]))
 			return false;
 		else 
 		{
@@ -324,18 +327,18 @@ public class Token
 				}
 			}
 		}
-		
+
 		return true;
-		
+
 	}
-	
+
 
 	private boolean isLetter (char c)
 	{
 		return isLowerCaseLetter (c) || isUpperCaseLetter (c);
 	}
-	
-	
+
+
 	private boolean isLowerCaseLetter (char c)
 	{
 		return c == 'a' || c == 'b' || c == 'c' || c == 'd'
@@ -346,8 +349,8 @@ public class Token
 				|| c == 'u' || c == 'v' || c == 'w' || c == 'x'
 				|| c == 'y' || c == 'z';
 	}
-	
-	
+
+
 	private boolean isUpperCaseLetter (char c)
 	{
 		return c == 'A' || c == 'B' || c == 'C' || c == 'D'
@@ -358,109 +361,41 @@ public class Token
 				|| c == 'U' || c == 'V' || c == 'W' || c == 'X'
 				|| c == 'Y' || c == 'Z';
 	}
-	
+
 	public Token (Kind kind, int lineNum, int charPos)
 	{
 		this.kind = kind;
 		this.lineNum = lineNum;
 		this.charPos = charPos;
-		
+
 	}
+
+
+	public static Token INTEGER (String lexeme, int lineNum, int charPos)
+	{
+		Token tok = new Token (lineNum, charPos);
+		tok.kind = Kind.INTEGER;
+		tok.lexeme = lexeme;
+		return tok;
+	}
+
+
+	public static Token FLOAT (String lexeme, int lineNum, int charPos)
+	{
+		Token tok = new Token (lineNum, charPos);
+		tok.kind = Kind.FLOAT;
+		tok.lexeme = lexeme;
+		return tok;
+	}
+	
+	
+	
 	public Token(String lexeme, int lineNum, int charPos)
 	{
 		this.lineNum = lineNum;
 		this.charPos = charPos;
 		this.lexeme = lexeme;
-		
-		// TODO: based on the given lexeme determine and set the actual kind
-		if (isFloat (lexeme))
-			kind = Token.Kind.FLOAT;
-		else if (isInteger (lexeme))
-			kind = Token.Kind.INTEGER;
-		else if (lexeme.equals(Token.Kind.AND.default_lexeme))
-			kind = Token.Kind.AND;
-		else if (lexeme.equals (Token.Kind.OR.default_lexeme))
-			kind = Token.Kind.OR;
-		else if (lexeme.equals (Token.Kind.NOT.default_lexeme))
-			kind = Token.Kind.NOT;
-		else if (lexeme.equals (Token.Kind.LET.default_lexeme))
-			kind = Token.Kind.LET;
-		else if (lexeme.equals (Token.Kind.VAR.default_lexeme))
-			kind = Token.Kind.VAR;
-		else if (lexeme.equals (Token.Kind.ARRAY.default_lexeme))
-			kind = Token.Kind.ARRAY;
-		else if (lexeme.equals (Token.Kind.FUNC.default_lexeme))
-			kind = Token.Kind.FUNC;
-		else if (lexeme.equals (Token.Kind.IF.default_lexeme))
-			kind = Token.Kind.IF;
-		else if (lexeme.equals (Token.Kind.ELSE.default_lexeme))
-			kind = Token.Kind.ELSE;
-		else if (lexeme.equals (Token.Kind.WHILE.default_lexeme))
-			kind = Token.Kind.WHILE;
-		else if (lexeme.equals (Token.Kind.TRUE.default_lexeme))
-			kind = Token.Kind.TRUE;
-		else if (lexeme.equals (Token.Kind.FALSE.default_lexeme))
-			kind = Token.Kind.FALSE;
-		else if (lexeme.equals (Token.Kind.RETURN.default_lexeme))
-			kind = Token.Kind.RETURN;
-		else if (lexeme.equals (Token.Kind.OPEN_PAREN.default_lexeme))
-			kind = Token.Kind.OPEN_PAREN;
-		else if (lexeme.equals (Token.Kind.CLOSE_PAREN.default_lexeme))
-			kind = Token.Kind.CLOSE_PAREN;
-		else if (lexeme.equals (Token.Kind.OPEN_BRACE.default_lexeme))
-			kind = Token.Kind.OPEN_BRACE;
-		else if (lexeme.equals (Token.Kind.CLOSE_BRACE.default_lexeme))
-			kind = Token.Kind.CLOSE_BRACE;
-		else if (lexeme.equals (Token.Kind.OPEN_BRACKET.default_lexeme))
-			kind = Token.Kind.OPEN_BRACKET;
-		else if (lexeme.equals (Token.Kind.CLOSE_BRACKET.default_lexeme))
-			kind = Token.Kind.CLOSE_BRACKET;
-		else if (lexeme.equals (Token.Kind.ADD.default_lexeme))
-			kind = Token.Kind.ADD;
-		else if (lexeme.equals (Token.Kind.SUB.default_lexeme))
-			kind = Token.Kind.SUB;
-		else if (lexeme.equals (Token.Kind.MUL.default_lexeme))
-			kind = Token.Kind.MUL;
-		else if (lexeme.equals (Token.Kind.DIV.default_lexeme))
-			kind = Token.Kind.DIV;
-		else if (lexeme.equals (Token.Kind.GREATER_EQUAL.default_lexeme))
-			kind = Token.Kind.GREATER_EQUAL;
-		else if (lexeme.equals (Token.Kind.LESSER_EQUAL.default_lexeme))
-			kind = Token.Kind.LESSER_EQUAL;
-		else if (lexeme.equals (Token.Kind.NOT_EQUAL.default_lexeme))
-			kind = Token.Kind.NOT_EQUAL;
-		else if (lexeme.equals (Token.Kind.EQUAL.default_lexeme))
-			kind = Token.Kind.EQUAL;
-		else if (lexeme.equals (Token.Kind.GREATER_THAN.default_lexeme))
-			kind = Token.Kind.GREATER_THAN;
-		else if (lexeme.equals (Token.Kind.LESSER_THAN.default_lexeme))
-			kind = Token.Kind.LESSER_THAN;
-		else if (lexeme.equals (Token.Kind.ASSIGN.default_lexeme))
-			kind = Token.Kind.ASSIGN;
-		else if (lexeme.equals (Token.Kind.COMMA.default_lexeme))
-			kind = Token.Kind.COMMA;
-		else if (lexeme.equals (Token.Kind.SEMICOLON.default_lexeme))
-			kind = Token.Kind.SEMICOLON;
-		else if (lexeme.equals (Token.Kind.COLON.default_lexeme))
-			kind = Token.Kind.COLON;
-		else if (lexeme.equals (Token.Kind.CALL.default_lexeme))
-			kind = Token.Kind.CALL;
-		else if (lexeme.equals (Token.Kind.IDENTIFIER.default_lexeme))
-			kind = Token.Kind.IDENTIFIER;
-		else if (lexeme.equals (Token.Kind.INTEGER.default_lexeme))
-			kind = Token.Kind.INTEGER;
-		else if (lexeme.equals (Token.Kind.FLOAT.default_lexeme))
-			kind = Token.Kind.FLOAT;
-		else if (lexeme.equals (Token.Kind.ERROR.default_lexeme))
-			kind = Token.Kind.ERROR;
-		else if (lexeme.equals (Token.Kind.EOF.default_lexeme))
-			kind = Token.Kind.EOF;
-		else
-		{
-			// if we don't match anything, signal error
-			this.kind = Kind.ERROR;
-			this.lexeme = "Unrecognized lexeme: " + lexeme;
-		}
+
 
 	}
 
@@ -485,21 +420,27 @@ public class Token
 	{
 		// TODO: implement this
 		StringBuilder result 
-				= new StringBuilder (this.kind.name());
+		= new StringBuilder (this.kind.name());
 
 		if (kind == Kind.ERROR)
 			result.append(toStringError());
+		else if (kind == Kind.INTEGER || kind == Kind.FLOAT)
+			result.append (toStringNumber ());
 		
 		result.append(toStringCharPosition());
-		
+
 		return result.toString();
 	}
 
-	
+
+	private String toStringNumber ()
+	{
+		return "(" + lexeme + ")";
+	}
 	private String toStringCharPosition ()
 	{
 		return "(lineNum:" + lineNum + ", charPos:" 
-				 + charPos + ")";  
+				+ charPos + ")";  
 	}
 
 	private String toStringError ()
