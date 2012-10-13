@@ -6,9 +6,9 @@ import java.util.Iterator;
 import crux.Token.Kind;
 
 public class Scanner implements Iterable<Token> {
-	public static String studentName = "TODO: YOUR NAME";
-	public static String studentID = "TODO: Your 8-digit id";
-	public static String uciNetID = "TODO: uci-net id";
+	public static String studentName = "Tai Bo";
+	public static String studentID = "53907660";
+	public static String uciNetID = "tbo";
 
 	private int lineNum;  // current line count
 	private int charPos;  // character offset for current line
@@ -16,12 +16,7 @@ public class Scanner implements Iterable<Token> {
 	private Reader input;
 
 
-	// to determine whether the next char to nextChar
-	// has already been read. Since sometimes, it is 
-	// necessary to lookahead at the next character
-	// to determine if the current character represents
-	// a valid token
-	boolean nextCharRead = false;	
+	
 	// nextChar has been examined
 	Scanner(Reader reader) throws IOException
 	{
@@ -88,14 +83,15 @@ public class Scanner implements Iterable<Token> {
 	
 	private void skipCommands() throws IOException
 	{
-		while ( nextChar  != 10)	// per ASCII table, 10 is the linefeed 
+		while ( nextChar  != 10 && nextChar != -1)	// per ASCII table, 10 is the linefeed 
 		{
 			nextChar = readChar ();
 		}
-		
-
-		
 	}
+	
+	
+
+	
 	/* Invariants:
 	 *  1. call assumes that nextChar is already holding an unread character
 	 *  2. return leaves nextChar containing an untokenized character
@@ -111,6 +107,8 @@ public class Scanner implements Iterable<Token> {
 		{
 			do
 			{
+				int lineNum = this.lineNum;
+				int charPos = this.charPos;
 				nextChar = readChar ();
 				if (nextChar == '/')
 				{
@@ -118,7 +116,7 @@ public class Scanner implements Iterable<Token> {
 					skipBlankSpace ();
 				}
 				else
-					return Token.ERROR (lineNum, charPos, "/" );
+					return new Token (Kind.DIV, lineNum, charPos);
 			} while ((char) nextChar == '/');
 		
 			
@@ -128,65 +126,51 @@ public class Scanner implements Iterable<Token> {
 		int lineNum = this.lineNum;
 		int charPos = this.charPos;
 
-		Token token;
 		switch ( (char)nextChar)
 		{
 		case '(':
-			token = Token.OPEN_PAREN(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.OPEN_PAREN,lineNum, charPos);
 		case ')':
-			token = Token.CLOSE_PAREN(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.CLOSE_PAREN, lineNum, charPos);	
 		case '{':
-			token = Token.OPEN_BRACE(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return  new Token (Kind.OPEN_BRACE, lineNum, charPos);
 		case '}':
-			token = Token.CLOSE_BRACE(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.CLOSE_BRACE, lineNum, charPos);
 		case '[':
-			token = Token.OPEN_BRACKET(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.OPEN_BRACKET, lineNum, charPos);
 		case ']':
-			token = Token.CLOSE_BRACKET(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.CLOSE_BRACKET, lineNum, charPos);
 		case '+':
-			token = Token.ADD(lineNum, charPos);
-			nextChar = readChar ();
-			break;
+			nextChar = readChar();
+			return new Token (Kind.ADD, lineNum, charPos);
 		case '-':
-			token = Token.SUB(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.SUB, lineNum, charPos);
 		case '*':
-			token = Token.MUL(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.MUL, lineNum, charPos);
 		case '/':
-			token = Token.DIV(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.DIV, lineNum, charPos);
 		case ',':
-			token = Token.COMMA(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.COMMA, lineNum, charPos);
 		case ';':
-			token = Token.SEMICOLON(lineNum, charPos);
 			nextChar = readChar();
-			break;
+			return new Token (Kind.SEMICOLON, lineNum, charPos);
 		default:
 			if (isNumber ((char) nextChar))
-				token = parseNumber (lineNum, charPos);
+				return parseNumber (lineNum, charPos);
 			else
-				token = parseMultiChar (lineNum, charPos);
+				return parseMultiChar (lineNum, charPos);
 		}
 
-		return token;
 	}
 
 
@@ -222,10 +206,10 @@ public class Scanner implements Iterable<Token> {
 				nextChar = readChar ();
 			}
 
-			return Token.FLOAT (number, lineNum, charPos);
+			return new Token (Kind.FLOAT, number, lineNum, charPos);
 		}
 		else
-			return Token.INTEGER (number, lineNum, charPos);
+			return new Token (Kind.INTEGER, number, lineNum, charPos);
 	}
 
 
@@ -239,49 +223,49 @@ public class Scanner implements Iterable<Token> {
 			if (((char) nextChar) == '=')
 			{
 				nextChar = readChar();
-				return Token.GREATER_EQUAL(lineNum, charPos);
+				return new Token (Kind.GREATER_EQUAL, lineNum, charPos);
 			}
 			else
-				return Token.GREATER_THAN(lineNum, charPos);
+				return new Token (Kind.GREATER_THAN, lineNum, charPos);
 
 		case '<':
 			nextChar = readChar();
 			if (((char) nextChar) == '=')
 			{
 				nextChar = readChar();
-				return Token.LESSER_EQUAL(lineNum, charPos);
+				return new Token (Kind.LESSER_EQUAL, lineNum, charPos);
 			}
 			else 
-				return Token.LESSER_THAN(lineNum, charPos);
+				return new Token (Kind.LESS_THAN, lineNum, charPos);
 
 		case '!':
 			nextChar = readChar();
 			if (((char) nextChar) == '=')
 			{
 				nextChar = readChar();
-				return Token.NOT_EQUAL(lineNum, charPos);
+				return new Token (Kind.NOT_EQUAL, lineNum, charPos);
 			}
 			else
-				return Token.ERROR(lineNum, charPos, "!");
+				return new Token (Kind.ERROR, "!", lineNum, charPos);
 
 		case '=':
 			nextChar = readChar();
 			if (((char) nextChar) == '=')
 			{
 				nextChar = readChar();
-				return Token.EQUAL(lineNum, charPos);
+				return  new Token (Kind.EQUAL, lineNum, charPos);
 			}
 			else
-				return Token.ASSIGN(lineNum, charPos);
+				return new Token (Kind.ASSIGN, lineNum, charPos);
 		case ':':
 			nextChar = readChar ();
 			if (((char) nextChar) == ':')
 			{
 				nextChar = readChar ();
-				return Token.CALL (lineNum, charPos);
+				return new Token (Kind.CALL, lineNum, charPos);
 			}
 			else
-				return Token.COLON (lineNum, charPos);
+				return new Token (Kind.COLON, lineNum, charPos);
 		default:
 			if (isValidIdentifierCharacter ((char) nextChar))
 				return parseIdentifier (lineNum, charPos);
@@ -289,7 +273,7 @@ public class Scanner implements Iterable<Token> {
 			{
 				String lexeme = "" + (char) nextChar;
 				nextChar = readChar ();
-				return Token.ERROR (lineNum, charPos, lexeme);
+				return new Token (Kind.ERROR, lexeme, lineNum, charPos);
 			}
 		}
 	}
@@ -309,7 +293,7 @@ public class Scanner implements Iterable<Token> {
 				{
 					lexeme += (char) nextChar;
 					nextChar = readChar ();
-					if (isBlank (nextChar))
+					if (isBlank (nextChar) || !isValidIdentifierCharacter ((char)nextChar))
 						return new Token (Token.Kind.AND, lineNum, charPos);
 				}
 			}
@@ -329,7 +313,8 @@ public class Scanner implements Iterable<Token> {
 						{
 							lexeme += (char) nextChar;
 							nextChar = readChar ();
-							if (isBlank (nextChar))
+							if (isBlank (nextChar) || 
+									!isValidIdentifierCharacter ((char)nextChar))
 								return new Token (Kind.ARRAY, lineNum, charPos);	
 						}
 					}
@@ -343,7 +328,7 @@ public class Scanner implements Iterable<Token> {
 			{
 				lexeme += (char) nextChar;
 				nextChar = readChar ();
-				if (isBlank (nextChar))
+				if (isBlank (nextChar) || !isValidIdentifierCharacter ((char)nextChar))
 					return new Token (Kind.OR, lineNum, charPos);
 			}
 			break;
@@ -357,7 +342,8 @@ public class Scanner implements Iterable<Token> {
 				{
 					lexeme += (char) nextChar;
 					nextChar = readChar ();
-					if (isBlank (nextChar))
+					if (isBlank (nextChar) 
+							|| isValidIdentifierCharacter ((char)nextChar))
 						return new Token (Kind.NOT, lineNum, charPos);
 				}
 			}
@@ -372,7 +358,8 @@ public class Scanner implements Iterable<Token> {
 				{
 					lexeme += (char) nextChar;
 					nextChar = readChar ();
-					if (isBlank (nextChar))
+					if (isBlank (nextChar) 
+							|| !isValidIdentifierCharacter ((char) nextChar))
 						return new Token (Kind.LET, lineNum, charPos);
 				}
 			}
@@ -381,13 +368,13 @@ public class Scanner implements Iterable<Token> {
 			nextChar = readChar ();
 			if ((char) nextChar == 'a')
 			{
-				lexeme += nextChar;
+				lexeme += (char)nextChar;
 				nextChar = readChar ();
 				if ((char) nextChar == 'r')
 				{
-					lexeme += nextChar;
+					lexeme += (char) nextChar;
 					nextChar = readChar();
-					if (isBlank (nextChar))
+					if (isBlank (nextChar) || !isValidIdentifierCharacter ( (char) nextChar))
 						return new Token (Kind.VAR, lineNum, charPos);
 				}
 			}
@@ -400,13 +387,14 @@ public class Scanner implements Iterable<Token> {
 				nextChar = readChar ();
 				if ((char) nextChar == 'n')
 				{
-					lexeme += nextChar;
+					lexeme += (char) nextChar;
 					nextChar = readChar();
 					if ((char) nextChar == 'c')
 					{
-						lexeme += nextChar;
+						lexeme += (char) nextChar;
 						nextChar = readChar ();
-						if (isBlank (nextChar))
+						if (isBlank (nextChar) ||
+								!isValidIdentifierCharacter ( (char) nextChar))
 							return new Token (Kind.FUNC, lineNum, charPos);
 					}
 				}
@@ -416,17 +404,18 @@ public class Scanner implements Iterable<Token> {
 				nextChar = readChar ();
 				if ((char) nextChar == 'l')
 				{
-					lexeme += nextChar;
+					lexeme += (char) nextChar;
 					nextChar = readChar ();
 					if ((char) nextChar == 's')
 					{
-						lexeme += nextChar;
+						lexeme += (char) nextChar;
 						nextChar = readChar();
 						if ((char) nextChar == 'e')
 						{
-							lexeme += nextChar;
+							lexeme += (char) nextChar;
 							nextChar = readChar ();
-							if (isBlank (nextChar))
+							if (isBlank (nextChar) || 
+									 !isValidIdentifierCharacter ( (char) nextChar))
 								return new Token (Kind.FALSE, lineNum, charPos);
 						}
 					}
@@ -437,9 +426,10 @@ public class Scanner implements Iterable<Token> {
 			nextChar = readChar ();
 			if ((char) nextChar == 'f')
 			{
-				lexeme += nextChar;
+				lexeme += (char) nextChar;
 				nextChar = readChar();
-				if (isBlank (nextChar))
+				if (isBlank (nextChar) || 
+						 !isValidIdentifierCharacter ( (char) nextChar))
 					return new Token (Kind.IF, lineNum, charPos);
 			}
 			break;
@@ -447,17 +437,18 @@ public class Scanner implements Iterable<Token> {
 			nextChar = readChar();
 			if ((char) nextChar == 'l')
 			{
-				lexeme += nextChar;
+				lexeme += (char) nextChar;
 				nextChar = readChar ();
 				if ((char) nextChar == 's')
 				{
-					lexeme += nextChar;
+					lexeme += (char) nextChar;
 					nextChar = readChar();
 					if ((char) nextChar == 'e')
 					{
-						lexeme += nextChar;
+						lexeme += (char) nextChar;
 						nextChar = readChar ();
-						if (isBlank (nextChar))
+						if (isBlank (nextChar) || 
+								 !isValidIdentifierCharacter ( (char) nextChar))
 							return new Token (Kind.ELSE, lineNum, charPos);
 					}
 				}
@@ -467,21 +458,22 @@ public class Scanner implements Iterable<Token> {
 			nextChar = readChar ();
 			if ((char) nextChar == 'h')
 			{
-				lexeme += nextChar;
+				lexeme += (char) nextChar;
 				nextChar = readChar ();
 				if ((char) nextChar == 'i')
 				{
-					lexeme += nextChar;
+					lexeme += (char) nextChar;
 					nextChar = readChar();
 					if ((char) nextChar == 'l')
 					{
-						lexeme += nextChar;
+						lexeme += (char ) nextChar;
 						nextChar = readChar ();
 						if ((char) nextChar == 'e')
 						{
-							lexeme += nextChar;
+							lexeme += (char) nextChar;
 							nextChar = readChar ();
-							if (isBlank (nextChar))
+							if (isBlank (nextChar) || 
+									!isValidIdentifierCharacter((char) nextChar))
 								return new Token (Kind.WHILE, lineNum, charPos);
 						}
 					}
@@ -492,17 +484,18 @@ public class Scanner implements Iterable<Token> {
 			nextChar = readChar();
 			if ((char) nextChar == 'r')
 			{
-				lexeme += nextChar;
+				lexeme += (char)  nextChar;
 				nextChar = readChar ();
 				if ((char) nextChar == 'u')
 				{
-					lexeme += nextChar;
+					lexeme += (char) nextChar;
 					nextChar = readChar();
 					if ((char) nextChar == 'e')
 					{
-						lexeme += nextChar;
+						lexeme += (char) nextChar;
 						nextChar = readChar ();
-						if (isBlank (nextChar))
+						if (isBlank (nextChar) || 
+								!isValidIdentifierCharacter((char)nextChar))
 							return new Token (Kind.TRUE, lineNum, charPos);
 					}
 				}
@@ -512,15 +505,15 @@ public class Scanner implements Iterable<Token> {
 			nextChar = readChar();
 			if ((char) nextChar == 'e')
 			{
-				lexeme += nextChar;
+				lexeme += (char) nextChar;
 				nextChar = readChar ();
 				if ((char) nextChar == 't')
 				{
-					lexeme += nextChar;
+					lexeme += (char) nextChar;
 					nextChar = readChar();
 					if ((char) nextChar == 'u')
 					{
-						lexeme += nextChar;
+						lexeme += (char ) nextChar;
 						nextChar = readChar ();
 						if ((char) nextChar == 'r')
 						{
@@ -528,9 +521,10 @@ public class Scanner implements Iterable<Token> {
 							nextChar = readChar ();
 							if ((char) nextChar == 'n')
 							{
-								lexeme += nextChar;
+								lexeme +=  (char) nextChar;
 								nextChar = readChar ();
-								if (isBlank (nextChar))
+								if (isBlank (nextChar) ||  
+										!isValidIdentifierCharacter ( (char) nextChar))
 									return new Token (Kind.RETURN, lineNum, charPos);
 							}
 						}
@@ -545,7 +539,7 @@ public class Scanner implements Iterable<Token> {
 				lexeme += (char) nextChar;
 				nextChar = readChar ();
 			}
-			return Token.IDENTIFIER (lexeme, lineNum, charPos);
+			return new Token (Kind.IDENTIFIER, lexeme, lineNum, charPos);
 		}
 		
 		// if nothing has been return, then this must be an identifier 
@@ -555,7 +549,7 @@ public class Scanner implements Iterable<Token> {
 					lexeme += (char) nextChar;
 					nextChar = readChar ();
 				}
-		return Token.IDENTIFIER (lexeme, lineNum, charPos);
+		return new Token (Kind.IDENTIFIER, lexeme, lineNum, charPos);
 	}
 
 
