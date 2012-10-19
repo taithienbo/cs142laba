@@ -343,7 +343,7 @@ public class Scanner implements Iterable<Token> {
 					lexeme += (char) nextChar;
 					nextChar = readChar ();
 					if (isBlank (nextChar) 
-							|| isValidIdentifierCharacter ((char)nextChar))
+							|| !isValidIdentifierCharacter ((char)nextChar))
 						return new Token (Kind.NOT, lineNum, charPos);
 				}
 			}
