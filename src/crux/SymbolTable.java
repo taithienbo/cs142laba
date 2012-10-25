@@ -1,58 +1,61 @@
 package crux;
 
+
 import java.util.ArrayList;
-import java.util.HashMap;
+
+import java.util.LinkedHashMap;
+
 import java.util.Map;
 
 public class SymbolTable
 {
-	private int depth;
+	private int depth = 0;
 	private ArrayList<Map<String, Symbol>> table;
-	private SymbolTable parent;
 
-	public SymbolTable(SymbolTable parent)
+
+	public SymbolTable()
 	{
-		this.parent = parent;
 		table = new ArrayList<Map<String, Symbol>>();
-	}
-
-	private boolean haveParent()
-	{
-		return parent != null;
-	}
+		table.add(new LinkedHashMap<String, Symbol>());
+	} 
 
 
 	public void increaseDepth()
 	{
 		depth++;
-		table.add(new HashMap<String, Symbol>());
+		table.add(new LinkedHashMap<String, Symbol>());
 	}
 
 
 	public void decreseDepth()
-	{
-		depth--;
-		table.remove(depth);
+	{	
+		table.remove(depth--);
 	}
 
 
+	// currently use for JUnit testing
 	public int getDepth()
 	{
 		return depth;
 	}
-
-
-	private Map<String, Symbol> getSymbolsAtDepth (int depth)
+	
+	
+	private Map<String, Symbol> getSymbolsAtDepth(int depth)
 	{
 		return table.get(depth);
 	}
+	
+	
+	
 
 	public Symbol lookup(String name) throws SymbolNotFoundError
 	{
-		if (!getSymbolsAtDepth(depth).containsKey(name))
-			throw new SymbolNotFoundError(name);
-
-		return getSymbolsAtDepth(depth).get(name);
+		for (int i = depth; i >= 0; i--)
+		{
+			if (getSymbolsAtDepth(i).containsKey(name))
+				return getSymbolsAtDepth(i).get(name);
+		}
+		throw new SymbolNotFoundError(name);
 	}
 
 
@@ -68,7 +71,6 @@ public class SymbolTable
 		getSymbolsAtDepth(depth).put(name, symbol);
 
 		return symbol;
-
 	}
 
 
@@ -76,31 +78,26 @@ public class SymbolTable
 	{
 		StringBuffer sb = new StringBuffer();
 
+		for (Symbol s : getSymbolsAtDepth(0).values())	
+			sb.append(s.toString() + "\n");
 
-		if (haveParent())
-		{
-			sb.append(parent.toString());
-		}
 		String indent = new String();
-		for (int i = 0; i < depth; i++) {
+
+		for (int i = 1; i < table.size(); i++)
+		{
 			indent += "  ";
+			for (Symbol s : 
+				getSymbolsAtDepth(i).values())
+				sb.append(indent + s.toString() + "\n");
 		}
 
-		if (!table.isEmpty())
-		{
-			for (Map<String, Symbol> symbols : table)
-			{
-				for (Symbol symbol : symbols.values())
-				{
-					sb.append(indent + symbol.toString() + "\n");
-				}
-			}
-		}
 		return sb.toString();
 	}
 }
 
-class SymbolNotFoundError extends Error
+
+
+ class SymbolNotFoundError extends Error
 {
 	private static final long serialVersionUID = 1L;
 	private String name;
@@ -115,6 +112,7 @@ class SymbolNotFoundError extends Error
 		return name;
 	}
 }
+
 
 class RedeclarationError extends Error
 {

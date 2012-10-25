@@ -18,7 +18,8 @@ public class Symbol {
         return "Symbol(" + name + ")";
     }
 
-    public static Symbol newError(String message) {
+    public static Symbol newError(String message) 
+    {
         return new ErrorSymbol(message);
     }
 }
