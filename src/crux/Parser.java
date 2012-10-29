@@ -1,6 +1,41 @@
 package crux;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import ast.Addition;
+import ast.AddressOf;
+import ast.ArrayDeclaration;
+import ast.Assignment;
+import ast.Call;
+import ast.Command;
+import ast.Comparison;
+import ast.Comparison.Operation;
+import ast.Declaration;
+import ast.DeclarationList;
+import ast.Dereference;
+import ast.Division;
+import ast.Expression;
+import ast.ExpressionList;
+import ast.FunctionDefinition;
+import ast.IfElseBranch;
+import ast.Index;
+import ast.LiteralBool;
+import ast.LiteralBool.Value;
+import ast.LiteralFloat;
+import ast.LiteralInt;
+import ast.LogicalAnd;
+import ast.LogicalNot;
+import ast.LogicalOr;
+import ast.Multiplication;
+import ast.Return;
+import ast.Statement;
+import ast.StatementList;
+import ast.Subtraction;
+import ast.VariableDeclaration;
+import ast.WhileLoop;
+import crux.Token.Kind;
 
 
 public class Parser 
@@ -199,17 +234,13 @@ public class Parser
 	}
 
 
-	public void parse() throws IOException
+	public Command parse() throws IOException
 	{
 		initSymbolTable();
-		try 
-		{
-			program();
-		} 
-		catch (QuitParseException q) 
-		{
-			errorBuffer.append("SyntaxError(" + lineNumber() + "," + charPosition() + ")");
-			errorBuffer.append("[Could not complete parsing.]");
+		try {
+			return program();
+		} catch (QuitParseException q) {
+			return new ast.Error(lineNumber(), charPosition(), "Could not complete parsing.");
 		}
 	}
 
@@ -270,192 +301,360 @@ public class Parser
 	// Grammar Rules =====================================================
 
 	// literal := INTEGER | FLOAT | TRUE | FALSE .
-	public void literal() throws IOException
+	public Expression literal() throws IOException
 	{
-		expect (NonTerminal.LITERAL);
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+
+		Token literal = expectRetrieve(NonTerminal.LITERAL);
+
+		if (literal.kind == Kind.INTEGER)
+			return new LiteralInt(lineNumber, charPosition, 
+					Integer.parseInt(literal.lexeme()));
+		else if (literal.kind == Kind.FLOAT)
+			return new LiteralFloat(lineNumber, charPosition, 
+					Float.parseFloat(literal.lexeme()));
+		else if (literal.kind == Kind.TRUE)
+			return new LiteralBool(lineNumber, charPosition,
+					Value.TRUE);
+		else 
+			return new LiteralBool(lineNumber, charPosition,
+					Value.FALSE);
 	}
 
 
 	// designator := IDENTIFIER { "[" expression0 "]" } .
-	public void designator() throws IOException
+	/**
+	 * 
+	 * @param expression 
+	 * @return per the rule for designator, if this method finds no expression,
+	 * then return the Expression passed as the parameter, otherwise return
+	 * the result expression  
+	 * @throws IOException
+	 */
+	// not sure how to do this, not sure how array indexing
+	// works in Crux 
+	public Expression designator() throws IOException
 	{
-		expect(Token.Kind.IDENTIFIER);
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+
+		Token base = expectRetrieve(Token.Kind.IDENTIFIER);
+		AddressOf address = 
+				new AddressOf(lineNumber, charPosition,
+						new Symbol(base.lexeme()));
+
+		// set index to the base address to correctly represent one-dimensional 
+		// array
+		Expression index = address;
 		while (accept(Token.Kind.OPEN_BRACKET)) 
 		{
-			expression0();
+			charPosition = charPosition();
+			Expression amount =  expression0();
+			
+			// a multi-dimensional array can be represented as a one 
+			// dimensional array in which each element is also an array
+			index = new Index(lineNumber, charPosition,
+					index, amount);
+
 			expect(Token.Kind.CLOSE_BRACKET);
 		}
+
+		return index;
 	}
 
 
 	// call-expression ";"
-	public void callStatement () throws IOException
+	public Statement callStatement () throws IOException
 	{
-		callExpression ();
+		Statement callStatement = (Statement) callExpression ();
 		expect (Token.Kind.SEMICOLON);
+
+		return callStatement;
 	}
 
 
 	// expression-list := [ expression0 { "," expression0 } ] .
-	public void expressionList () throws IOException
+	public ExpressionList expressionList () throws IOException
 	{
+		ExpressionList expressionList = 
+				new ExpressionList(lineNumber(), charPosition());
+
 		if (have (NonTerminal.EXPRESSION0))
 		{
-			expression0 ();
+			expressionList.add(expression0 ());
 			while (accept (Token.Kind.COMMA))
-				expression0 ();
+				expressionList.add(expression0 ());
 		}
+
+		return expressionList;
 	}
 
 	// "::" IDENTIFIER "(" expression-list ")" .
-	public void callExpression () throws IOException
+	public Expression callExpression () throws IOException
 	{
+		ExpressionList arguments = null;
+
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+
 		expect (Token.Kind.CALL);
 
-		if (have(Token.Kind.IDENTIFIER))
-			tryResolveSymbol(currentToken);
+		Symbol func = tryResolveSymbol(currentToken);
 
 		expect (Token.Kind.IDENTIFIER);
 		expect (Token.Kind.OPEN_PAREN);
-		expressionList ();
+		arguments = expressionList ();
 		expect (Token.Kind.CLOSE_PAREN);
+
+		return new Call(lineNumber, charPosition, func, arguments);
 	}
 
 
 	// "not" expression3 | "(" expression0 ")"
 	// | designator | call-expression | literal .
-	public void expression3 () throws IOException
+	public Expression expression3 () 	throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		Expression expression = null;
+
 		if (accept (Token.Kind.NOT))
-			expression3 ();
+			expression = new LogicalNot
+			(lineNumber, charPosition, 
+					expression3());
+
 		else if (accept (Token.Kind.OPEN_PAREN))
 		{
-			expression0 ();
+			expression = expression0 ();
 			expect (Token.Kind.CLOSE_PAREN);
 		}
+		// not sure about array indexing 
+		// assuming need to use Dereference
 		else if (have (NonTerminal.DESIGNATOR))
 		{
-			if (have(NonTerminal.DESIGNATOR))
-				tryResolveSymbol(currentToken);
-			designator ();
-		}
+			tryResolveSymbol(currentToken);
+			expression = new Dereference
+					(lineNumber, charPosition, designator ());
+		}	
 		else if (have (NonTerminal.CALL_EXPRESSION))
-			callExpression ();
+		{
+			expression = callExpression();
+		}
 		else if (have (NonTerminal.LITERAL))
-			literal ();
+			expression = literal ();
 		else
 			throw new QuitParseException (reportSyntaxError(NonTerminal.EXPRESSION3));
+
+		return expression;
 	}
 
 
 	// expression3 { op2 expression3 } .
-	public void expression2 () throws IOException
+	public Expression expression2 () throws IOException
 	{
-		expression3 ();
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		Expression leftSide = expression3();
 		while ( have (NonTerminal.OP2))
 		{
-			op2 ();
-			expression3 ();
+			charPosition = charPosition();
+			
+			Token operatorToken = op2 ();
+			Expression rightSide = expression3 ();
+
+			// op2 := "*" | "/" | "and" .
+			if (operatorToken.kind == Kind.MUL)
+				leftSide = new Multiplication
+				(lineNumber, charPosition, leftSide, rightSide);
+			else if (operatorToken.kind == Kind.DIV)
+				leftSide = new Division
+				(lineNumber, charPosition, leftSide, rightSide);
+			else
+				leftSide = new LogicalAnd
+				(lineNumber, charPosition, leftSide, rightSide);
 		}
-	}
+
+		return leftSide;
+			}
 
 
 	// expression2 { op1  expression2 } .
-	public void expression1 () throws IOException
+	public Expression expression1 () throws IOException
 	{
-		expression2 ();
-		while ( have (NonTerminal.OP1))
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		Expression leftSide = expression2();
+		
+		while (have (NonTerminal.OP1))
 		{
-			op1 ();
-			expression2 ();
+			charPosition = charPosition();
+			Token operator = op1 ();
+			
+			Expression rightSide = expression2();
+			if (operator.kind == Kind.ADD)
+				leftSide = new Addition
+				(lineNumber, charPosition, leftSide, rightSide);
+			else if (operator.kind == Kind.SUB)
+				leftSide = new Subtraction
+				(lineNumber, charPosition, leftSide, rightSide);
+			else 
+				leftSide =  new LogicalOr
+				(lineNumber, charPosition, leftSide, rightSide);
 		}
+
+		return leftSide;
 	}
 
 
 	// expression1 [ op0 expression1 ] .
-	public void expression0 () throws IOException
+	public Expression expression0 () throws IOException
 	{
-		expression1 ();
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		Expression leftSide =  expression1();
 
 		if (have (NonTerminal.OP0))
 		{
-			op0 ();
-			expression1 ();
+			charPosition = charPosition();
+			
+			Token operationToken = op0 ();
+			Expression rightSide = expression1 ();
+
+			if (operationToken.kind == Kind.GREATER_THAN)
+				return new Comparison(lineNumber, charPosition, 
+					leftSide, Operation.GT, rightSide);
+			else if (operationToken.kind == Kind.GREATER_EQUAL)
+				return new Comparison(lineNumber, charPosition, 
+						leftSide, Operation.GE, rightSide);
+			else if (operationToken.kind == Kind.EQUAL)
+				return new Comparison(lineNumber, charPosition, 
+					leftSide, Operation.EQ, rightSide);
+			else if (operationToken.kind == Kind.NOT_EQUAL)
+				return new Comparison(lineNumber, charPosition, 
+						leftSide, Operation.NE, rightSide);
+			else if (operationToken.kind == Kind.LESS_THAN)
+				return new Comparison(lineNumber, charPosition, 
+						leftSide, Operation.LT, rightSide);	
+			else if (operationToken.kind == Kind.LESSER_EQUAL)
+				return new Comparison(lineNumber, charPosition, 
+						leftSide, Operation.LE, rightSide);
 		}
+		
+		return leftSide;
 	}
 
 
 	// "return" expression0 ";" 
-	public void returnStatement () throws IOException
+	public Statement returnStatement () throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		Expression arguments = null;
 		expect (Token.Kind.RETURN);
-		expression0 ();
+		arguments =  expression0 ();
 		expect (Token.Kind.SEMICOLON);
+
+		return new Return(lineNumber, charPosition, arguments);
 	}
 
 
 	// "while" expression0 statement-block .
-	public void whileStatement () throws IOException
+	public Statement whileStatement () throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		Expression condition = null; 
+		StatementList body = null;
+
 		expect (Token.Kind.WHILE);
-		expression0 ();
+		condition = expression0 ();
 		enterScope();
-		statementBlock ();
+		body = statementBlock ();
 		exitScope();
+
+		return new WhileLoop(lineNumber, charPosition,
+				condition, body);
 	}
 
 
 	//  "let" designator "=" expression0 ";"
-	public void assignmentStatement () throws IOException
+	public Statement assignmentStatement () throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		Expression destination = null;
+		Expression source = null;
+
 		expect (Token.Kind.LET);
 
 		if (have(Token.Kind.IDENTIFIER))
 			tryResolveSymbol (currentToken);
 
-		designator ();
+		destination = designator ();
 		expect (Token.Kind.ASSIGN);
-		expression0();
+		source = expression0();
 		expect (Token.Kind.SEMICOLON);
+
+		return new Assignment(lineNumber, charPosition,
+				destination, source);
 	}
 
 
 	// "if" expression0 statement-block [ "else" statement-block ]
-	public void ifStatement () throws IOException
+	public Statement ifStatement () throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		Expression condition = null;
+		StatementList thenBlock = null;
 		expect (Token.Kind.IF);
-		expression0();
+		condition = expression0();
 
 		enterScope();
-		statementBlock ();
+		thenBlock = statementBlock ();
 		exitScope();
-
+		
+		// it is necessary to initialize elseBlock even if there is no Else
+		// part of the IfElseBranch, since ast.IfElseBranch.elseBlock() always
+		// get called.  
+		StatementList elseBlock = new StatementList(lineNumber(), charPosition());
 		if (have (Token.Kind.ELSE))
 		{
 			expect (Token.Kind.ELSE);	
 			enterScope();
-			statementBlock ();
+			elseBlock = statementBlock ();
 			exitScope();
 		}
+
+		return new IfElseBranch (lineNumber, charPosition,
+				condition, thenBlock, elseBlock);
 	}
 
 
 	// variable-declaration  | call-statement | assignment-statement
 	// | if-statement | while-statement | return-statement .
-	public void statement () throws IOException
+	public Statement statement () throws IOException
 	{
 		if (have (NonTerminal.VARIABLE_DECLARATION))
-			variableDeclaration ();
+			return variableDeclaration ();
 		else if (have (NonTerminal.CALL_STATEMENT))
-			callStatement ();
+			return callStatement ();
 		else if (have (NonTerminal.ASSIGNMENT_STATEMENT))
-			assignmentStatement ();
+			return assignmentStatement ();
 		else if (have (NonTerminal.IF_STATEMENT))
-			ifStatement ();
+			return ifStatement ();
 		else if (have (NonTerminal.WHILE_STATEMENT))
-			whileStatement ();
+			return whileStatement ();
 		else if (have (NonTerminal.RETURN_STATEMENT))
-			returnStatement ();
+			return returnStatement ();
 		else 
 			throw new QuitParseException
 			(reportSyntaxError (NonTerminal.STATEMENT));
@@ -463,68 +662,93 @@ public class Parser
 
 
 	// { statement }
-	public void statementList () throws IOException
+	public StatementList statementList () throws IOException
 	{
+		StatementList statementList = new StatementList(lineNumber(), charPosition());
+
 		while (have (NonTerminal.STATEMENT))
-			statement ();	
+			statementList.add(statement ());
+
+		return statementList;
 	}
 
 
 	// "{" statement-list "}"
-	public void statementBlock () throws IOException
+	public StatementList statementBlock () throws IOException
 	{
+		StatementList statementList = null;
+
 		expect (Token.Kind.OPEN_BRACE);
-		statementList ();
+		statementList = statementList ();
 		expect (Token.Kind.CLOSE_BRACE);
+
+		return statementList;
 	}
 
 
 	// IDENTIFIER ":" type
-	public void parameter () throws IOException
+	public Symbol parameter () throws IOException
 	{
+		Symbol symbol = null;
 		if (have(Token.Kind.IDENTIFIER))
-			tryDeclareSymbol(currentToken);
+			symbol = tryDeclareSymbol(currentToken);
 
 		expect (Token.Kind.IDENTIFIER);
 		expect (Token.Kind.COLON);
 		type ();
+
+		return symbol;
 	}
 
 
 	// parameter-list := [ parameter { "," parameter } ] .
-	public void parameterList () throws IOException
+	public List<Symbol> parameterList () throws IOException
 	{
+		List<Symbol> parameterList = new ArrayList<Symbol>();
+
 		if (have (NonTerminal.PARAMETER))
 		{
-			parameter ();
+			parameterList.add(parameter ());
 			while (accept (Token.Kind.COMMA))
 			{
-				parameter ();
+				parameterList.add(parameter ());
 			}
 		}
+
+		return parameterList;
 	}
 
 
 	// "func" IDENTIFIER "(" parameter-list ")" ":" type statement-block
-	public void functionDefinition () throws IOException
+	public FunctionDefinition functionDefinition () throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+
+		Symbol func = null;
+		StatementList body = null;
+		List<Symbol> args  = null;
+
 		expect (Token.Kind.FUNC);
 
 		if (have(Token.Kind.IDENTIFIER))
-			tryDeclareSymbol(currentToken);
+			func = tryDeclareSymbol(currentToken);
 
 		expect (Token.Kind.IDENTIFIER);
 		expect (Token.Kind.OPEN_PAREN);
 
 		enterScope();
 
-		parameterList ();
+		args = parameterList ();
 		expect (Token.Kind.CLOSE_PAREN);
 		expect (Token.Kind.COLON);
 		type ();
-		statementBlock ();
+		body = statementBlock ();
 
 		exitScope();
+
+		return new FunctionDefinition(lineNumber, charPosition,
+				func, args, body);
 	}
 
 
@@ -535,13 +759,21 @@ public class Parser
 	}
 
 	// "array" IDENTIFIER ":" type "[" INTEGER "]" { "[" INTEGER "]" } ";"
-	public void arrayDeclaration () throws IOException
+	public ArrayDeclaration arrayDeclaration () throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		
+		ArrayDeclaration arrayDeclaration = null;
+
 		expect (Token.Kind.ARRAY);
 
 		if (have(Token.Kind.IDENTIFIER))
-			tryDeclareSymbol(currentToken);
-
+		{
+			arrayDeclaration = 
+					new ArrayDeclaration
+					(lineNumber, charPosition,  tryDeclareSymbol(currentToken));
+		}
 		expect (Token.Kind.IDENTIFIER);
 		expect (Token.Kind.COLON);
 		type();
@@ -556,54 +788,66 @@ public class Parser
 		}
 
 		expect (Token.Kind.SEMICOLON);
+
+		return arrayDeclaration;
 	}
 
 
 	// ">=" | "<=" | "!=" | "==" | ">" | "<"
-	public void op0 () throws IOException
+	public Token op0 () throws IOException
 	{
-		expect (NonTerminal.OP0);
+		return expectRetrieve (NonTerminal.OP0);
 	}
 
-
+	
 	// "+" | "-" | "or" .
-	public void op1 () throws IOException
+	public Token op1 () throws IOException
 	{
-		expect (NonTerminal.OP1);
+		return expectRetrieve (NonTerminal.OP1);
 	}
 
 
 	// "*" | "/" | "and" .
-	public void op2 () throws IOException 
+	public Token op2 () throws IOException 
 	{
-		expect (NonTerminal.OP2);
+		return expectRetrieve(NonTerminal.OP2);
 	}
 
 
 	// "var" IDENTIFIER ":" type ";"
-	public void variableDeclaration () throws IOException
+	public VariableDeclaration variableDeclaration () throws IOException
 	{
+		int lineNumber = lineNumber();
+		int charPosition = charPosition();
+		VariableDeclaration variableDeclaration = null;
+
 		expect (Token.Kind.VAR);
 
 		if (have (Token.Kind.IDENTIFIER))
-			tryDeclareSymbol(currentToken);
+		{
+			variableDeclaration = new VariableDeclaration(
+					lineNumber, charPosition, 
+					tryDeclareSymbol(currentToken));
+		}
 
 		expect (Token.Kind.IDENTIFIER);
 		expect (Token.Kind.COLON);
 		type();
 		expect (Token.Kind.SEMICOLON);
+
+		return variableDeclaration;
 	}
 
 
 	//  variable-declaration | array-declaration | function-definition .
-	public void declaration () throws IOException
+	public Declaration declaration () throws IOException
 	{
 		if (have (NonTerminal.VARIABLE_DECLARATION))
-			variableDeclaration ();
+			return variableDeclaration ();
 		else if (have (NonTerminal.ARRAY_DECLARATION))
-			arrayDeclaration ();
+			return arrayDeclaration ();
 		else if ( have (NonTerminal.FUNCTION_DEFINITION))
-			functionDefinition ();
+			return functionDefinition ();
 		else 
 			throw new QuitParseException 
 			(reportSyntaxError (NonTerminal.DECLARATION));
@@ -611,19 +855,26 @@ public class Parser
 
 
 	// { declaration }
-	public void declarationList () throws IOException
+	public DeclarationList declarationList () throws IOException
 	{
+		DeclarationList declarationList = new DeclarationList(lineNumber(), charPosition());
+
 		while (have (NonTerminal.DECLARATION))
 		{
-			declaration ();
+			declarationList.add(declaration ());
 		}
+
+		return declarationList;
 	}
 
 
 	// program := declaration-list EOF .
-	public void program() throws IOException
+	public DeclarationList program() throws IOException
 	{
-		declarationList ();
+		ast.DeclarationList list;
+		list = declarationList ();
 		expect (Token.Kind.EOF);
+
+		return list;
 	}
 }
