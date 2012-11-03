@@ -351,7 +351,7 @@ public class Parser
 		{
 			charPosition = charPosition();
 			Expression amount =  expression0();
-			
+
 			// a multi-dimensional array can be represented as a one 
 			// dimensional array in which each element is also an array
 			index = new Index(lineNumber, charPosition,
@@ -452,57 +452,31 @@ public class Parser
 
 	// expression3 { op2 expression3 } .
 	public Expression expression2 () throws IOException
-	{
-		int lineNumber = lineNumber();
-		int charPosition = charPosition();
-		
+	{		
 		Expression leftSide = expression3();
 		while ( have (NonTerminal.OP2))
 		{
-			charPosition = charPosition();
-			
 			Token operatorToken = op2 ();
 			Expression rightSide = expression3 ();
 
-			// op2 := "*" | "/" | "and" .
-			if (operatorToken.kind == Kind.MUL)
-				leftSide = new Multiplication
-				(lineNumber, charPosition, leftSide, rightSide);
-			else if (operatorToken.kind == Kind.DIV)
-				leftSide = new Division
-				(lineNumber, charPosition, leftSide, rightSide);
-			else
-				leftSide = new LogicalAnd
-				(lineNumber, charPosition, leftSide, rightSide);
+			leftSide = Command.newExpression(leftSide, operatorToken, rightSide);
 		}
 
 		return leftSide;
-			}
+	}
 
 
 	// expression2 { op1  expression2 } .
 	public Expression expression1 () throws IOException
 	{
-		int lineNumber = lineNumber();
-		int charPosition = charPosition();
-		
 		Expression leftSide = expression2();
-		
+
 		while (have (NonTerminal.OP1))
 		{
-			charPosition = charPosition();
 			Token operator = op1 ();
-			
+
 			Expression rightSide = expression2();
-			if (operator.kind == Kind.ADD)
-				leftSide = new Addition
-				(lineNumber, charPosition, leftSide, rightSide);
-			else if (operator.kind == Kind.SUB)
-				leftSide = new Subtraction
-				(lineNumber, charPosition, leftSide, rightSide);
-			else 
-				leftSide =  new LogicalOr
-				(lineNumber, charPosition, leftSide, rightSide);
+			leftSide = Command.newExpression(leftSide, operator, rightSide);
 		}
 
 		return leftSide;
@@ -512,38 +486,16 @@ public class Parser
 	// expression1 [ op0 expression1 ] .
 	public Expression expression0 () throws IOException
 	{
-		int lineNumber = lineNumber();
-		int charPosition = charPosition();
-		
 		Expression leftSide =  expression1();
 
 		if (have (NonTerminal.OP0))
-		{
-			charPosition = charPosition();
-			
+		{	
 			Token operationToken = op0 ();
 			Expression rightSide = expression1 ();
 
-			if (operationToken.kind == Kind.GREATER_THAN)
-				return new Comparison(lineNumber, charPosition, 
-					leftSide, Operation.GT, rightSide);
-			else if (operationToken.kind == Kind.GREATER_EQUAL)
-				return new Comparison(lineNumber, charPosition, 
-						leftSide, Operation.GE, rightSide);
-			else if (operationToken.kind == Kind.EQUAL)
-				return new Comparison(lineNumber, charPosition, 
-					leftSide, Operation.EQ, rightSide);
-			else if (operationToken.kind == Kind.NOT_EQUAL)
-				return new Comparison(lineNumber, charPosition, 
-						leftSide, Operation.NE, rightSide);
-			else if (operationToken.kind == Kind.LESS_THAN)
-				return new Comparison(lineNumber, charPosition, 
-						leftSide, Operation.LT, rightSide);	
-			else if (operationToken.kind == Kind.LESSER_EQUAL)
-				return new Comparison(lineNumber, charPosition, 
-						leftSide, Operation.LE, rightSide);
+			return Command.newExpression(leftSide, operationToken, rightSide);
 		}
-		
+
 		return leftSide;
 	}
 
@@ -553,7 +505,7 @@ public class Parser
 	{
 		int lineNumber = lineNumber();
 		int charPosition = charPosition();
-		
+
 		Expression arguments = null;
 		expect (Token.Kind.RETURN);
 		arguments =  expression0 ();
@@ -568,7 +520,7 @@ public class Parser
 	{
 		int lineNumber = lineNumber();
 		int charPosition = charPosition();
-		
+
 		Expression condition = null; 
 		StatementList body = null;
 
@@ -588,7 +540,7 @@ public class Parser
 	{
 		int lineNumber = lineNumber();
 		int charPosition = charPosition();
-		
+
 		Expression destination = null;
 		Expression source = null;
 
@@ -612,7 +564,7 @@ public class Parser
 	{
 		int lineNumber = lineNumber();
 		int charPosition = charPosition();
-		
+
 		Expression condition = null;
 		StatementList thenBlock = null;
 		expect (Token.Kind.IF);
@@ -621,7 +573,7 @@ public class Parser
 		enterScope();
 		thenBlock = statementBlock ();
 		exitScope();
-		
+
 		// it is necessary to initialize elseBlock even if there is no Else
 		// part of the IfElseBranch, since ast.IfElseBranch.elseBlock() always
 		// get called.  
@@ -763,7 +715,7 @@ public class Parser
 	{
 		int lineNumber = lineNumber();
 		int charPosition = charPosition();
-		
+
 		ArrayDeclaration arrayDeclaration = null;
 
 		expect (Token.Kind.ARRAY);
@@ -799,7 +751,7 @@ public class Parser
 		return expectRetrieve (NonTerminal.OP0);
 	}
 
-	
+
 	// "+" | "-" | "or" .
 	public Token op1 () throws IOException
 	{
