@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+import types.Type;
+
 import ast.Addition;
 import ast.AddressOf;
 import ast.ArrayDeclaration;
@@ -134,6 +137,7 @@ public class Parser
 		//return ErrorToken(errorMessage);
 	}
 
+	
 	private Token expectRetrieve(NonTerminal nt) throws IOException
 	{
 		Token tok = currentToken;
@@ -268,6 +272,15 @@ public class Parser
 		return false;
 	}    
 
+
+// Typing System ===================================
+    
+    private Type tryResolveType(String typeStr)
+    {
+        return Type.getBaseType(typeStr);
+    }
+    
+    	
 	private boolean accept(NonTerminal nt) throws IOException
 	{
 		if (have(nt)) 

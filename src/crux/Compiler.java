@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 public class Compiler {
-	public static String studentName = "Tai Bo";
-	public static String studentID = "53907660";
-	public static String uciNetID = "tbo";
+	public static String studentName = "TODO: Your Name";
+	public static String studentID = "TODO: Your 8-digit id";
+	public static String uciNetID = "TODO: uci-net id";
 
 	public static void main(String[] args)
 	{
@@ -16,33 +16,42 @@ public class Compiler {
 		Scanner s = null;
 		try {
 			s = new Scanner(new FileReader(sourceFilename));
-		} catch (IOException e) {
+
+		}
+		catch (IOException e) 
+		{
 			e.printStackTrace();
 			System.err.println("Error accessing the source file: \"" + sourceFilename + "\"");
 			System.exit(-2);
 		}
 
 		Parser p;
-		try 
-		{
+		try {
 			p = new Parser(s);
 			ast.Command syntaxTree = p.parse();
-			if (p.hasError()) {
-				System.out.println("Error parsing file " + sourceFilename);
+
+			if (p.hasError())
+			{
+				System.out.println("Error parsing file.");
 				System.out.println(p.errorReport());
 				System.exit(-3);
 			}
 
-			ast.PrettyPrinter pp = new ast.PrettyPrinter();
-			syntaxTree.accept(pp);
-			System.out.println(pp.toString());
-		}
-
+			types.TypeChecker tc = new types.TypeChecker();
+			tc.check(syntaxTree);
+			if (tc.hasError()) 
+			{
+				System.out.println("Error type-checking file.");
+				System.out.println(tc.errorReport());
+				System.exit(-4);
+			}
+			System.out.println("Crux Program is has no type errors.");
+		} 
 		catch (IOException e) 
 		{
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+		} 
 	}
 }
 
