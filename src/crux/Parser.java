@@ -7,18 +7,16 @@ import java.util.List;
 
 import types.Type;
 
-import ast.Addition;
 import ast.AddressOf;
 import ast.ArrayDeclaration;
 import ast.Assignment;
 import ast.Call;
 import ast.Command;
-import ast.Comparison;
-import ast.Comparison.Operation;
+
 import ast.Declaration;
 import ast.DeclarationList;
 import ast.Dereference;
-import ast.Division;
+
 import ast.Expression;
 import ast.ExpressionList;
 import ast.FunctionDefinition;
@@ -28,14 +26,13 @@ import ast.LiteralBool;
 import ast.LiteralBool.Value;
 import ast.LiteralFloat;
 import ast.LiteralInt;
-import ast.LogicalAnd;
+
 import ast.LogicalNot;
-import ast.LogicalOr;
-import ast.Multiplication;
+
 import ast.Return;
 import ast.Statement;
 import ast.StatementList;
-import ast.Subtraction;
+
 import ast.VariableDeclaration;
 import ast.WhileLoop;
 import crux.Token.Kind;

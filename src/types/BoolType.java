@@ -4,7 +4,6 @@ public class BoolType extends Type {
     
     public BoolType()
     {
-        throw new RuntimeError("implement operators");
     }
     
     @Override
@@ -23,4 +22,38 @@ public class BoolType extends Type {
         
         return true;
     }
+    
+    
+  @Override
+  public Type and(Type that)
+  {
+	  if (! (that instanceof BoolType))
+		  return super.and(that);
+	  return new BoolType();
+  }
+  
+  
+  @Override
+  public Type or(Type that)
+  {
+	  if (! (that instanceof BoolType))
+		  return super.or(that);
+	  return new BoolType();
+  }
+  
+  
+  @Override
+  public Type not()
+  {
+	  return new BoolType();
+  }
+  
+  
+  @Override
+  public Type assign(Type source)
+  {
+	  if (! (source instanceof BoolType))
+		  return super.assign(source);
+	  return new BoolType();
+  }
 }    

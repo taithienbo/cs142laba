@@ -6,8 +6,7 @@ public class ArrayType extends Type {
     private int extent;
     
     public ArrayType(int extent, Type base)
-    {
-        throw new RuntimeError("implement operators");
+    {	
         this.extent = extent;
         this.base = base;
     }
@@ -17,15 +16,27 @@ public class ArrayType extends Type {
         return extent;
     }
     
+    
+        
+    
+    @Override
+    public Type compare(Type that)
+    {
+    	if(!(that instanceof ArrayType))
+    		return super.compare(that);
+    	return base.compare(((ArrayType) that).base());
+    }
+    
+    
     public Type base()
     {
         return base;
     }
     
-    @override
-    public string tostring()
+    @Override
+    public String toString()
     {
-        return "array[" + extent "," + base + "]";
+        return "array[" + extent + "," + base + "]";
     }
     
     @Override
@@ -39,4 +50,6 @@ public class ArrayType extends Type {
         ArrayType aType = (ArrayType)that;
         return this.extent == aType.extent && base.equivalent(aType.base);
     }
+    
+    
 }
