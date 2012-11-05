@@ -14,7 +14,7 @@ public class Compiler {
 		String sourceFilename = args[0];
 
 		Scanner s = null;
-		try {
+		try { 	
 			s = new Scanner(new FileReader(sourceFilename));
 
 		}

@@ -1,10 +1,11 @@
 package types;
 
-public class FloatType extends Type {
+public class FloatType extends Type 
+{
     
     public FloatType()
     {
-        throw new RuntimeError("implement operators");
+       
     }
     
     @Override
@@ -22,4 +23,50 @@ public class FloatType extends Type {
             return false;
         return true;
     }
+    
+    
+    @Override
+    public Type add(Type that)
+    {
+    	if (! (that instanceof FloatType))
+    		return super.add(that);
+    	return new FloatType();	
+    }
+    
+    
+    @Override
+    public Type sub(Type that)
+    {
+    	if (!(that instanceof FloatType))
+    		return super.sub(that);
+    	return new FloatType();
+    }
+    
+    
+    @Override
+    public Type mul(Type that)
+    {
+    	if (!(that instanceof FloatType))
+    		return super.mul(that);
+    	return new FloatType();
+    }
+    
+    
+    @Override
+    public Type div(Type that)
+    {
+    	if (!(that instanceof FloatType))
+    		return super.div(that);
+    	return new FloatType();
+    }
+    
+    
+    @Override
+    public Type compare(Type that)
+    {
+        if (!(that instanceof FloatType))
+            return super.compare(that);
+        return new BoolType();
+    }
+
 }

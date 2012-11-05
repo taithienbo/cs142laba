@@ -1,13 +1,13 @@
 package types;
 
-public class FuncType extends Type {
+public class FuncType extends Type 
+{
    
    private TypeList args;
    private Type ret;
    
    public FuncType(TypeList args, Type returnType)
    {
-      throw new RuntimeError("implement operators");
       this.args = args;
       this.ret = returnType;
    }

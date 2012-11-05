@@ -21,7 +21,8 @@ public class PrettyPrinter implements CommandVisitor {
 	}
 	
 	@Override
-	public void visit(ExpressionList node) {
+	public void visit(ExpressionList node) 
+	{
 		println(node);
 		depth++;
 		for (Expression e : node)
@@ -30,7 +31,8 @@ public class PrettyPrinter implements CommandVisitor {
 	}
 
 	@Override
-	public void visit(DeclarationList node) {
+	public void visit(DeclarationList node) 
+	{
 		println(node);
 		depth++;
 		for (Declaration d : node)
@@ -219,7 +221,8 @@ public class PrettyPrinter implements CommandVisitor {
 	}
 
 	@Override
-	public void visit(Error node) {
+	public void visit(Error node) 
+	{
 		println(node);
 	}
 
