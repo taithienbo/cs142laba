@@ -134,7 +134,7 @@ public class Parser
 		//return ErrorToken(errorMessage);
 	}
 
-	
+
 	private Token expectRetrieve(NonTerminal nt) throws IOException
 	{
 		Token tok = currentToken;
@@ -270,14 +270,14 @@ public class Parser
 	}    
 
 
-// Typing System ===================================
-    
-    private Type tryResolveType(String typeStr)
-    {
-        return Type.getBaseType(typeStr);
-    }
-    
-    	
+	// Typing System ===================================
+
+	private Type tryResolveType(String typeStr)
+	{
+		return Type.getBaseType(typeStr);
+	}
+
+
 	private boolean accept(NonTerminal nt) throws IOException
 	{
 		if (have(nt)) 
@@ -334,16 +334,6 @@ public class Parser
 
 
 	// designator := IDENTIFIER { "[" expression0 "]" } .
-	/**
-	 * 
-	 * @param expression 
-	 * @return per the rule for designator, if this method finds no expression,
-	 * then return the Expression passed as the parameter, otherwise return
-	 * the result expression  
-	 * @throws IOException
-	 */
-	// not sure how to do this, not sure how array indexing
-	// works in Crux 
 	public Expression designator() throws IOException
 	{
 		int lineNumber = lineNumber();
@@ -692,11 +682,9 @@ public class Parser
 		List<Symbol> args  = null;
 
 		expect (Token.Kind.FUNC);
+		
+		func = tryDeclareSymbol(expectRetrieve(Token.Kind.IDENTIFIER));
 
-		if (have(Token.Kind.IDENTIFIER))
-			func = tryDeclareSymbol(currentToken);
-
-		expect (Token.Kind.IDENTIFIER);
 		expect (Token.Kind.OPEN_PAREN);
 
 		enterScope();
@@ -704,7 +692,9 @@ public class Parser
 		args = parameterList ();
 		expect (Token.Kind.CLOSE_PAREN);
 		expect (Token.Kind.COLON);
-		type ();
+		
+		func.setType(type ());
+		
 		body = statementBlock ();
 
 		exitScope();
@@ -715,9 +705,10 @@ public class Parser
 
 
 	// type := IDENTIFIER .
-	public void type () throws IOException
+	public Type type () throws IOException
 	{
-		expect (Token.Kind.IDENTIFIER);
+		Token token = expectRetrieve (Token.Kind.IDENTIFIER);
+		return Type.getBaseType(token.lexeme());
 	}
 
 	// "array" IDENTIFIER ":" type "[" INTEGER "]" { "[" INTEGER "]" } ";"
@@ -730,15 +721,15 @@ public class Parser
 
 		expect (Token.Kind.ARRAY);
 
-		if (have(Token.Kind.IDENTIFIER))
-		{
-			arrayDeclaration = 
-					new ArrayDeclaration
-					(lineNumber, charPosition,  tryDeclareSymbol(currentToken));
-		}
-		expect (Token.Kind.IDENTIFIER);
+		Symbol arraySymbol = tryDeclareSymbol(expectRetrieve(Token.Kind.IDENTIFIER));
+
+		arrayDeclaration = new ArrayDeclaration
+				(lineNumber, charPosition,  arraySymbol);
+
 		expect (Token.Kind.COLON);
-		type();
+
+		arraySymbol.setType(type());
+
 		expect (Token.Kind.OPEN_BRACKET);
 		expect (Token.Kind.INTEGER);
 		expect (Token.Kind.CLOSE_BRACKET);
@@ -785,16 +776,17 @@ public class Parser
 
 		expect (Token.Kind.VAR);
 
-		if (have (Token.Kind.IDENTIFIER))
-		{
-			variableDeclaration = new VariableDeclaration(
-					lineNumber, charPosition, 
-					tryDeclareSymbol(currentToken));
-		}
+		Token iden = expectRetrieve (Token.Kind.IDENTIFIER);
+		Symbol variable = tryDeclareSymbol(iden);
 
-		expect (Token.Kind.IDENTIFIER);
+		variableDeclaration = new VariableDeclaration(
+				lineNumber, charPosition, 
+				variable );
+
 		expect (Token.Kind.COLON);
-		type();
+
+		variable.setType(type());
+
 		expect (Token.Kind.SEMICOLON);
 
 		return variableDeclaration;

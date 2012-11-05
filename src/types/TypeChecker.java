@@ -1,14 +1,47 @@
 package types;
 
 import java.util.HashMap;
-import ast.*;
+import java.util.Iterator;
+
+import ast.Addition;
+import ast.AddressOf;
+import ast.ArrayDeclaration;
+import ast.Assignment;
+import ast.Call;
+import ast.Command;
+import ast.CommandVisitor;
+import ast.Comparison;
+import ast.Declaration;
+import ast.DeclarationList;
+import ast.Dereference;
+import ast.Division;
+import ast.Expression;
+import ast.ExpressionList;
+import ast.FunctionDefinition;
+import ast.IfElseBranch;
+import ast.Index;
+import ast.LiteralBool;
+import ast.LiteralFloat;
+import ast.LiteralInt;
+import ast.LogicalAnd;
+import ast.LogicalNot;
+import ast.LogicalOr;
+import ast.Multiplication;
+import ast.Return;
+import ast.Statement;
+import ast.StatementList;
+import ast.Subtraction;
+import ast.VariableDeclaration;
+import ast.WhileLoop;
+import crux.Symbol;
+import crux.Token;
 
 public class TypeChecker implements CommandVisitor 
 {
     
     private HashMap<Command, Type> typeMap;
     private StringBuffer errorBuffer;
-
+    
     /* Useful error strings:
      *
      * "Function " + func.name() + " has a void argument in position " + pos + "."
@@ -27,6 +60,13 @@ public class TypeChecker implements CommandVisitor
      * "Array " + arrayName + " has invalid base type " + baseType + "."
      */
 
+    
+    private String getInvalidSignatureError()
+    {
+    	return "Function main has invalid signature.";
+    }
+    
+    
     public TypeChecker()
     {
         typeMap = new HashMap<Command, Type>();
@@ -72,19 +112,34 @@ public class TypeChecker implements CommandVisitor
     @Override
     public void visit(ExpressionList node) 
     {
-        throw new RuntimeException("Implement this");
+       Iterator<Expression> i = node.iterator();
+       while (i.hasNext())
+       {
+    	   Expression exp = i.next();
+    	   exp.accept(this);
+       }
     }
 
     @Override
     public void visit(DeclarationList node) 
     {
-        throw new RuntimeException("Implement this");
+        Iterator<Declaration> i = node.iterator();
+        while (i.hasNext())
+        {
+        	Declaration declaration = i.next();
+        	declaration.accept(this);
+        }
     }
 
     @Override
     public void visit(StatementList node)
     {
-        throw new RuntimeException("Implement this");
+       Iterator<Statement> i = node.iterator();
+       while (i.hasNext())
+       {
+    	   Statement statement = i.next();
+    	   statement.accept(this);
+       }
     }
 
     @Override
@@ -96,6 +151,7 @@ public class TypeChecker implements CommandVisitor
     @Override
     public void visit(LiteralBool node) 
     {
+    	
         throw new RuntimeException("Implement this");
     }
 
@@ -126,7 +182,25 @@ public class TypeChecker implements CommandVisitor
     @Override
     public void visit(FunctionDefinition node)
     {
-        throw new RuntimeException("Implement this");
+    
+    	Symbol funcSymbol = node.function();
+    	Type funcType = funcSymbol.type();
+    	
+    	if (funcSymbol.name().equals("main"))
+    	{
+    		// check that function "main" has type Void
+    		if (!(funcType instanceof VoidType))
+    		{
+    			reportError(node.lineNumber(), node.charPosition(),
+    					getInvalidSignatureError());
+    		}
+    	}
+    	else	// check that function actually returns the correct type
+    	{
+    		
+    	}
+    	
+
     }
 
     @Override
