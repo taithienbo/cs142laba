@@ -18,7 +18,7 @@ public class IntType extends Type
     {
         if (!(that instanceof IntType))
             return super.add(that);
-        return new IntType();
+        return this;
     }
 
     @Override
@@ -26,7 +26,7 @@ public class IntType extends Type
     {
         if (!(that instanceof IntType))
             return super.sub(that);
-        return new IntType();
+        return this;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class IntType extends Type
     {
         if (!(that instanceof IntType))
             return super.mul(that);
-        return new IntType();
+        return this;
     }
 
     @Override
@@ -42,7 +42,7 @@ public class IntType extends Type
     {
         if (!(that instanceof IntType))
             return super.div(that);
-        return new IntType();
+        return this;
     }
 
     @Override

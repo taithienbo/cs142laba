@@ -12,7 +12,8 @@ public class VariableDeclaration extends Command implements Declaration, Stateme
 	}
 	
 	@Override
-	public Symbol symbol() {
+	public Symbol symbol() 
+	{
 		return sym;
 	}
 	

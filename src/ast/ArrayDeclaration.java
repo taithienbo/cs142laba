@@ -2,7 +2,8 @@ package ast;
 
 import crux.Symbol;
 
-public class ArrayDeclaration extends Command implements Declaration, Statement 
+public class ArrayDeclaration extends Command 
+								implements Declaration, Statement 
 {
 	
 	private Symbol symbol;
