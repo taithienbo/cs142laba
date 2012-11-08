@@ -97,6 +97,8 @@ public class TypeChecker implements CommandVisitor
 	
 	
 	
+	
+	
 	private TypeList getTypeListFromSymbols(List<Symbol> symbols)
 	{
 		TypeList typeList = new TypeList();
@@ -405,7 +407,7 @@ public class TypeChecker implements CommandVisitor
 	@Override
 	public void visit(Return node) 
 	{
-		Expression arguments = node.argument();
+		node.argument().accept(this);
 	}
 
 	@Override
