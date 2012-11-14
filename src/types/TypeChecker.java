@@ -3,8 +3,7 @@ package types;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
+
 
 import ast.Addition;
 import ast.AddressOf;
@@ -38,7 +37,7 @@ import ast.VariableDeclaration;
 import ast.Visitable;
 import ast.WhileLoop;
 import crux.Symbol;
-;
+
 
 public class TypeChecker implements CommandVisitor 
 {
@@ -69,8 +68,8 @@ public class TypeChecker implements CommandVisitor
 	{
 		return "Function main has invalid signature.";
 	}
-	
-	
+
+
 	private String getIncorrectFunctionReturnType(Symbol func, Type unexpectedReturnType)
 	{
 		return "Function " + func + " returns " + unexpectedReturnType + " not " + func.type() + ".";
@@ -89,16 +88,7 @@ public class TypeChecker implements CommandVisitor
 	}
 
 
-	private Type visitRetrieveType(Visitable node)
-	{
-		node.accept(this);
-		return typeMap.get(node);
-	}
-	
-	
-	
-	
-	
+
 	private TypeList getTypeListFromSymbols(List<Symbol> symbols)
 	{
 		TypeList typeList = new TypeList();
@@ -106,10 +96,10 @@ public class TypeChecker implements CommandVisitor
 			typeList.add(s.type());
 		return typeList;
 	}
-	
-	
-	
-	
+
+
+
+
 	public TypeChecker()
 	{
 		typeMap = new HashMap<Command, Type>();
@@ -213,7 +203,7 @@ public class TypeChecker implements CommandVisitor
 	@Override
 	public void visit(VariableDeclaration node)
 	{
-		
+
 		put(node, node.symbol().type());
 	}
 
@@ -227,33 +217,59 @@ public class TypeChecker implements CommandVisitor
 	public void visit(FunctionDefinition node)
 	{
 		Symbol funcSymbol = node.function();
-		
+
 		if (funcSymbol.name().equals("main") && !(funcSymbol.type() instanceof VoidType))
 			put(node, new ErrorType(getInvalidMainFunctionSignatureError()));
 		else 
 			put(node, getTypeListFromSymbols(node.arguments()));
-		
+
+		// otherwise, check that the function actually returns correct type in
+		// all possible paths 
+		// check the current level/scope, if there is no return statement
+		// then check if there is an if statement, if so there must be a 
+		// non-empty else statement, otherwise report that the function
+		// needs to return a result 
 		visitExpectCorrectReturnType(node);		
 	}
-	
-	
+
+
+	private Type visitGetIfElseReturnType(IfElseBranch node)
+	{
+
+	}
+
+
 	private void visitExpectCorrectReturnType(FunctionDefinition node)
 	{
+
 		Iterator<Statement> i = node.body().iterator();
 		while (i.hasNext())
 		{
 			Statement statement = i.next();
-			Type statementType = visitRetrieveType(statement);
-			if(statement instanceof Return 
-					&& !statementType.equivalent(node.symbol().type()))
+			if (statement instanceof IfElseBranch)
 			{
-				put(node, new ErrorType(this.getIncorrectFunctionReturnType(node.symbol(),statementType)));
+				Type ifElseReturnType = visitGetIfElseReturnType
+						((IfElseBranch)statement);
+				if (ifElseReturnType == null)
+				{
+					if (! i.hasNext())
+					{
+						// report that function is missing a return type
+					}
+				}
+				else
+				{
+					if (!ifElseReturnType.equivalent(node.function().type()))
+							{
+								// report that function returns incorrect type
+							}
+				}
 			}
-			
+			// continue parsing other statements 
 		}
 	}
 
-	
+
 	@Override
 	public void visit(Comparison node)
 	{
@@ -349,27 +365,27 @@ public class TypeChecker implements CommandVisitor
 	{
 		// check that call actually calls an existing function, and the arguments 
 		// match with the function's signature 	
-		
+
 		visitExpectMatchingArguments(getFunctionDefinition(node.function()), node.arguments());
-	
+
 	}
-	
-	
+
+
 	private void visitExpectMatchingArguments(FunctionDefinition function, ExpressionList arguments)
 	{
 		Type functionType = getType(function);
 		if (functionType instanceof TypeList)
 		{
 			Iterator<Type> i = ((TypeList) functionType).iterator();
-		//	while(i.hasNext())
-		//	{
-				
-		//	}
+			//	while(i.hasNext())
+			//	{
+
+			//	}
 		}
-		
+
 	}
-		
-		
+
+
 	private FunctionDefinition getFunctionDefinition(Symbol function)
 	{		
 		for (Command command : typeMap.keySet())
@@ -378,7 +394,7 @@ public class TypeChecker implements CommandVisitor
 					&& ((FunctionDefinition) command).function() == function)
 				return (FunctionDefinition) command;
 		}
-		
+
 		return null;
 	}
 

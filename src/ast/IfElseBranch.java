@@ -6,7 +6,8 @@ public class IfElseBranch extends Command implements Statement {
 	private StatementList thenBlock;
 	private StatementList elseBlock;
 
-	public IfElseBranch(int lineNum, int charPos, Expression cond, StatementList thenBlock, StatementList elseBlock) {
+	public IfElseBranch(int lineNum, int charPos, Expression cond, StatementList thenBlock, StatementList elseBlock)
+	{
 		super(lineNum, charPos);
 		this.cond = cond;
 		this.thenBlock = thenBlock;
@@ -29,7 +30,8 @@ public class IfElseBranch extends Command implements Statement {
 	}
 
 	@Override
-	public void accept(CommandVisitor visitor) {
+	public void accept(CommandVisitor visitor) 
+	{
 		visitor.visit(this);
 	}
 
