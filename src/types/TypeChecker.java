@@ -70,11 +70,6 @@ public class TypeChecker implements CommandVisitor
 	}
 
 
-	private String getIncorrectFunctionReturnType(Symbol func, Type unexpectedReturnType)
-	{
-		return "Function " + func + " returns " + unexpectedReturnType + " not " + func.type() + ".";
-	}
-
 
 	private String getInvalidIfElseConditionError(Type unexpectedType)
 	{
@@ -185,19 +180,19 @@ public class TypeChecker implements CommandVisitor
 	@Override
 	public void visit(LiteralBool node) 
 	{
-		put(node, new BoolType());
+		throw new RuntimeException("Implement this");
 	}
 
 	@Override
 	public void visit(LiteralFloat node) 
 	{
-		put(node, new FloatType());
+		throw new RuntimeException("Implement this");
 	}
 
 	@Override
 	public void visit(LiteralInt node) 
 	{
-		put(node, new IntType());
+		throw new RuntimeException("Implement this");
 	}
 
 	@Override
@@ -228,46 +223,10 @@ public class TypeChecker implements CommandVisitor
 		// check the current level/scope, if there is no return statement
 		// then check if there is an if statement, if so there must be a 
 		// non-empty else statement, otherwise report that the function
-		// needs to return a result 
-		visitExpectCorrectReturnType(node);		
+	
 	}
 
 
-	private Type visitGetIfElseReturnType(IfElseBranch node)
-	{
-
-	}
-
-
-	private void visitExpectCorrectReturnType(FunctionDefinition node)
-	{
-
-		Iterator<Statement> i = node.body().iterator();
-		while (i.hasNext())
-		{
-			Statement statement = i.next();
-			if (statement instanceof IfElseBranch)
-			{
-				Type ifElseReturnType = visitGetIfElseReturnType
-						((IfElseBranch)statement);
-				if (ifElseReturnType == null)
-				{
-					if (! i.hasNext())
-					{
-						// report that function is missing a return type
-					}
-				}
-				else
-				{
-					if (!ifElseReturnType.equivalent(node.function().type()))
-							{
-								// report that function returns incorrect type
-							}
-				}
-			}
-			// continue parsing other statements 
-		}
-	}
 
 
 	@Override
@@ -279,6 +238,32 @@ public class TypeChecker implements CommandVisitor
 		put(node, leftType.compare(rightType));
 	}
 
+	
+	private Type visitRetrieveType(Expression e)
+	{
+		if (e instanceof Addition)
+		{
+			Addition addition = (Addition) e;
+			return visitRetrieveType(addition.leftSide())
+					.add(visitRetrieveType(addition.rightSide()));
+		}
+		else if (e instanceof LiteralFloat)
+			return new BoolType();
+		else if (e instanceof LiteralInt)
+			return new IntType();
+		else if (e instanceof Call)
+		{
+			Call call = (Call) e;
+			return visitRetrieveType(call.arguments());
+		}
+			return null;
+		
+	}
+	
+	
+
+	
+	
 	@Override
 	public void visit(Addition node) 
 	{
