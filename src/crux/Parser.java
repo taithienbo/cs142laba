@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import types.FloatType;
 import types.Type;
 
 import ast.AddressOf;
@@ -339,10 +340,13 @@ public class Parser
 		int lineNumber = lineNumber();
 		int charPosition = charPosition();
 
+		
 		Token base = expectRetrieve(Token.Kind.IDENTIFIER);
+		Symbol symbol = tryResolveSymbol(base);
+		
 		AddressOf address = 
 				new AddressOf(lineNumber, charPosition,
-						new Symbol(base.lexeme()));
+						symbol);
 
 		// set index to the base address to correctly represent one-dimensional 
 		// array
@@ -382,9 +386,9 @@ public class Parser
 
 		if (have (NonTerminal.EXPRESSION0))
 		{
-			expressionList.add(expression0 ());
+			expressionList.add(expression0());
 			while (accept (Token.Kind.COMMA))
-				expressionList.add(expression0 ());
+				expressionList.add(expression0());
 		}
 
 		return expressionList;
@@ -642,12 +646,13 @@ public class Parser
 	public Symbol parameter () throws IOException
 	{
 		Symbol symbol = null;
-		if (have(Token.Kind.IDENTIFIER))
-			symbol = tryDeclareSymbol(currentToken);
 
-		expect (Token.Kind.IDENTIFIER);
+		symbol = tryDeclareSymbol
+				(expectRetrieve(Token.Kind.IDENTIFIER));
+
 		expect (Token.Kind.COLON);
-		type ();
+
+		symbol.setType(type());
 
 		return symbol;
 	}
@@ -682,7 +687,7 @@ public class Parser
 		List<Symbol> args  = null;
 
 		expect (Token.Kind.FUNC);
-		
+
 		func = tryDeclareSymbol(expectRetrieve(Token.Kind.IDENTIFIER));
 
 		expect (Token.Kind.OPEN_PAREN);
@@ -692,9 +697,9 @@ public class Parser
 		args = parameterList ();
 		expect (Token.Kind.CLOSE_PAREN);
 		expect (Token.Kind.COLON);
-		
+
 		func.setType(type ());
-		
+
 		body = statementBlock ();
 
 		exitScope();

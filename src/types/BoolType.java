@@ -29,7 +29,7 @@ public class BoolType extends Type {
   {
 	  if (! (that instanceof BoolType))
 		  return super.and(that);
-	  return new BoolType();
+	  return this;
   }
   
   
@@ -38,14 +38,14 @@ public class BoolType extends Type {
   {
 	  if (! (that instanceof BoolType))
 		  return super.or(that);
-	  return new BoolType();
+	  return this;
   }
   
   
   @Override
   public Type not()
   {
-	  return new BoolType();
+	  return this;
   }
   
   
@@ -54,6 +54,6 @@ public class BoolType extends Type {
   {
 	  if (! (source instanceof BoolType))
 		  return super.assign(source);
-	  return new BoolType();
+	  return this;
   }
 }    
