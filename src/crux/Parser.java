@@ -5,19 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-import types.FloatType;
-import types.Type;
 
+import types.ArrayType;
+import types.BoolType;
+import types.Type;
 import ast.AddressOf;
 import ast.ArrayDeclaration;
 import ast.Assignment;
 import ast.Call;
 import ast.Command;
-
 import ast.Declaration;
 import ast.DeclarationList;
 import ast.Dereference;
-
 import ast.Expression;
 import ast.ExpressionList;
 import ast.FunctionDefinition;
@@ -27,13 +26,10 @@ import ast.LiteralBool;
 import ast.LiteralBool.Value;
 import ast.LiteralFloat;
 import ast.LiteralInt;
-
 import ast.LogicalNot;
-
 import ast.Return;
 import ast.Statement;
 import ast.StatementList;
-
 import ast.VariableDeclaration;
 import ast.WhileLoop;
 import crux.Token.Kind;
@@ -51,12 +47,6 @@ public class Parser
 	private void initSymbolTable()
 	{
 		symbolTable = new SymbolTable();
-		symbolTable.insert("readInt");
-		symbolTable.insert("readFloat");
-		symbolTable.insert("printBool");	
-		symbolTable.insert("printInt");
-		symbolTable.insert("printFloat");
-		symbolTable.insert("println");	
 	}
 
 
@@ -404,11 +394,10 @@ public class Parser
 
 		expect (Token.Kind.CALL);
 
-		Symbol func = tryResolveSymbol(currentToken);
+		Symbol func = tryResolveSymbol(expectRetrieve(Token.Kind.IDENTIFIER));
 
-		expect (Token.Kind.IDENTIFIER);
 		expect (Token.Kind.OPEN_PAREN);
-		arguments = expressionList ();
+		arguments = expressionList();
 		expect (Token.Kind.CLOSE_PAREN);
 
 		return new Call(lineNumber, charPosition, func, arguments);
@@ -433,8 +422,7 @@ public class Parser
 			expression = expression0 ();
 			expect (Token.Kind.CLOSE_PAREN);
 		}
-		// not sure about array indexing 
-		// assuming need to use Dereference
+	
 		else if (have (NonTerminal.DESIGNATOR))
 		{
 			tryResolveSymbol(currentToken);
@@ -715,6 +703,7 @@ public class Parser
 		Token token = expectRetrieve (Token.Kind.IDENTIFIER);
 		return Type.getBaseType(token.lexeme());
 	}
+	
 
 	// "array" IDENTIFIER ":" type "[" INTEGER "]" { "[" INTEGER "]" } ";"
 	public ArrayDeclaration arrayDeclaration () throws IOException
@@ -733,23 +722,34 @@ public class Parser
 
 		expect (Token.Kind.COLON);
 
-		arraySymbol.setType(type());
-
+		Type baseType = type();
+		
 		expect (Token.Kind.OPEN_BRACKET);
-		expect (Token.Kind.INTEGER);
+		
+		int amount = expectInteger();
+		
+		ArrayType array = new ArrayType(amount, baseType);
+		
 		expect (Token.Kind.CLOSE_BRACKET);
 
 		while (accept (Token.Kind.OPEN_BRACKET))
 		{
-			expect (Token.Kind.INTEGER);
+			amount = expectInteger();
+			// model multi-dimensional array
+			array = new ArrayType(amount,  array);
+			
 			expect (Token.Kind.CLOSE_BRACKET);
 		}
 
+		arraySymbol.setType(array);
+		
 		expect (Token.Kind.SEMICOLON);
 
 		return arrayDeclaration;
 	}
 
+	
+	
 
 	// ">=" | "<=" | "!=" | "==" | ">" | "<"
 	public Token op0 () throws IOException

@@ -24,6 +24,13 @@ public class BoolType extends Type {
     }
     
     
+    @Override
+    public Type deref()
+    {
+    	return this;
+    }
+    
+    
   @Override
   public Type and(Type that)
   {

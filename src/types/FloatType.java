@@ -13,7 +13,15 @@ public class FloatType extends Type
     {
         return "float";
     }
-       
+
+    
+    @Override
+    public Type deref()
+    {
+    	return this;
+    }
+    
+    
     @Override
     public boolean equivalent(Type that)
     {
@@ -69,4 +77,12 @@ public class FloatType extends Type
         return new BoolType();
     }
 
+    
+    @Override
+    public Type assign(Type source)
+    {
+    	if ( source instanceof FloatType)
+    		return this;
+    	return super.assign(source);
+    }
 }

@@ -14,7 +14,7 @@ public class AddressType extends Type {
         return base;
     }
     
-
+    
 
     @Override
     public String toString()
@@ -35,15 +35,21 @@ public class AddressType extends Type {
     }
     
     
-    @Override
-    public Type index(Type that)
-    {
-    	if (!(that instanceof AddressType))
-    		return super.index(that);
-    	return base.index(that); 
+    @Override                                                                                                        
+    public Type index(Type that)                                                                                     
+    {                                                                                                                
+      if (!(base instanceof ArrayType))                                                                        
+        return super.index(that);                                                                        
+      return new AddressType(base.index(that));                                                                
     }
+
     
-  
+    @Override
+    public Type deref()
+    {
+    	// return whatever type the base is
+    	return base;
+    }
     
     @Override
     public Type compare(Type that)

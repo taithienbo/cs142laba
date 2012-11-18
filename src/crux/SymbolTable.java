@@ -2,24 +2,72 @@ package crux;
 
 
 import java.util.ArrayList;
-
 import java.util.LinkedHashMap;
-
+import java.util.List;
 import java.util.Map;
+
+import types.BoolType;
+import types.FloatType;
+import types.IntType;
+import types.VoidType;
 
 public class SymbolTable
 {
 	private int depth = 0;
 	private ArrayList<Map<String, Symbol>> table;
 
-
+	private static List<Symbol> predefinedSymbols;
+	
 	public SymbolTable()
 	{
 		table = new ArrayList<Map<String, Symbol>>();
 		table.add(new LinkedHashMap<String, Symbol>());
+		predefinedSymbols = new ArrayList<Symbol>();
+		
+		initloadPredefinedSymbols();
 	} 
 
 
+	public static List<Symbol> getPredifinedSymbols()
+	{
+		return predefinedSymbols;
+	}
+	
+	
+	private void initloadPredefinedSymbols()
+	{
+		IntType intType = new IntType();
+		FloatType floatType = new FloatType();
+		VoidType voidType = new VoidType();
+		
+		Symbol readInt = insert("readInt");
+		readInt.setType(intType);
+		
+		Symbol readFloat = insert("readFloat");
+		readFloat.setType(floatType);
+		
+		Symbol printBool = insert("printBool");
+		printBool.setType(voidType);
+		
+		Symbol printInt = insert("printInt");
+		printInt.setType(voidType);
+		
+		Symbol printFloat = insert("printFloat");
+		printFloat.setType(voidType);
+		
+		Symbol println = insert("println");
+		println.setType(voidType);
+		
+		predefinedSymbols.add(readInt);
+		predefinedSymbols.add(readFloat);
+		predefinedSymbols.add(printBool);	
+		predefinedSymbols.add(printInt);
+		predefinedSymbols.add(printFloat);
+		predefinedSymbols.add(println);	
+	}
+	
+	
+	
 	public void increaseDepth()
 	{
 		depth++;

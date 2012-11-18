@@ -1,5 +1,7 @@
 package types;
 
+
+
 public class ArrayType extends Type {
     
     private Type base;
@@ -17,7 +19,16 @@ public class ArrayType extends Type {
     }
     
     
-        
+    @Override                                                                                                        
+    public Type index(Type that)                                                                                     
+    {         
+    	// can only index into an Address
+    	if (!(that instanceof AddressType))
+    		return super.index(that);
+  
+    	return base;
+    }
+
     
     @Override
     public Type compare(Type that)
@@ -32,6 +43,15 @@ public class ArrayType extends Type {
     {
         return base;
     }
+    
+    @Override
+    public Type deref()
+    {
+    	if (base instanceof AddressType)
+    		return base.deref();
+    	return this;
+    }
+    
     
     @Override
     public String toString()

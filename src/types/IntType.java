@@ -3,6 +3,7 @@ package types;
 public class IntType extends Type 
 {
 
+	
     public IntType() 
     {
     }
@@ -46,6 +47,13 @@ public class IntType extends Type
     }
 
     @Override
+    public Type deref()
+    {
+    	return this;
+    }
+    
+    
+    @Override
     public Type compare(Type that)
     {
         if (!(that instanceof IntType))
@@ -61,5 +69,13 @@ public class IntType extends Type
         if (!(that instanceof IntType))
             return false;
         return true;
+    }
+    
+    @Override
+    public Type assign(Type source)
+    {
+    	if (source instanceof IntType)
+    		return this;
+    	return super.assign(source);
     }
 }

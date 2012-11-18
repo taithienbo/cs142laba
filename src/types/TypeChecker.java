@@ -1,8 +1,8 @@
 package types;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import ast.Addition;
@@ -17,6 +17,7 @@ import ast.Declaration;
 import ast.DeclarationList;
 import ast.Dereference;
 import ast.Division;
+import ast.Error;
 import ast.Expression;
 import ast.ExpressionList;
 import ast.FunctionDefinition;
@@ -36,15 +37,16 @@ import ast.Subtraction;
 import ast.VariableDeclaration;
 import ast.WhileLoop;
 import crux.Symbol;
+import crux.SymbolTable;
 
 
 public class TypeChecker implements CommandVisitor 
 {
 
 	private HashMap<Command, Type> typeMap;
-	
+
 	// for performing matching arguments when calling functions 
-	private ArrayList<FunctionDefinition> functions;
+	private LinkedHashMap<Symbol, Type> functions;
 
 	private StringBuffer errorBuffer;
 
@@ -53,7 +55,7 @@ public class TypeChecker implements CommandVisitor
 	private IntType intType; 
 	private FloatType floatType;
 	private BoolType boolType; 
-	private VoidType voidType;
+
 
 	/* Useful error strings:
 	 *
@@ -73,25 +75,40 @@ public class TypeChecker implements CommandVisitor
 	 * "Array " + arrayName + " has invalid base type " + baseType + "."
 	 */
 
+	private String getHasInvalidArgument(Symbol func, int pos, ErrorType error)
+	{
+		return "Function " + func.name() 
+				+ " has an error in argument in position " 
+				+ pos + ": " + error.getMessage();
+	}
+	
+	
+	private String getHasVoidArgumentError(Symbol func, int pos)
+	{
+		return "Function " + func.name() 
+				+ " has a void argument in position " + pos + ".";
+	}
+	
 
 	private String getInvalidMainFunctionSignatureError()
 	{
 		return "Function main has invalid signature.";
 	}
 
-	
+
+	private String getInvalidArrayBaseTypeError(String name, Type base)
+	{
+		return  "Array " + name + " has invalid base type " + base + ".";
+	}
+
 	private String getInvalidVarTypeError(VariableDeclaration var)
 	{
 		return "Variable " + var.symbol().name()
 				+ " has invalid type " + var.symbol().type() + ".";
 	}
-	
-	
-	private String getInvalidArrayTypeError(ArrayDeclaration arrayDec)
-	{
-		return "Array " + arrayDec.symbol().name() + " has invalid base type " 
-					+ arrayDec.symbol().type() + ".";
-	}
+
+
+
 
 	private String getInvalidIfElseConditionError(Type unexpectedType)
 	{
@@ -101,15 +118,15 @@ public class TypeChecker implements CommandVisitor
 
 	private String getInvalidWhileConditionError(Type unexpectedType)
 	{
-		return "Whileloop requires bool condition not " + unexpectedType + ".";
+		return "WhileLoop requires bool condition not " + unexpectedType + ".";
 	}
-	
-	
+
+
 	private String getNotMatchingReturn(Symbol funcName, Type expected)
 	{
 		return  "Function " + funcName.name() + " returns " + 
-					funcName.type().toString() 
-					+ " not " + expected.toString() + ".";
+				funcName.type().toString() 
+				+ " not " + expected.toString() + ".";
 	}
 
 
@@ -123,7 +140,8 @@ public class TypeChecker implements CommandVisitor
 	{
 		TypeList typeList = new TypeList();
 		for (Symbol s : symbols)
-			typeList.add(s.type());
+			typeList.append(s.type());
+
 		return typeList;
 	}
 
@@ -132,48 +150,92 @@ public class TypeChecker implements CommandVisitor
 	{
 		typeMap = new HashMap<Command, Type>();
 		errorBuffer = new StringBuffer();
-		functions = new ArrayList<FunctionDefinition>();
+
+		functions = new LinkedHashMap<Symbol, Type>();
 		intType = new IntType();
 		floatType = new FloatType();
 		boolType = new BoolType();
-		voidType = new VoidType();
+
+		initializePredefinedFunctions();
 	}
 
-	
+
+	private void initializePredefinedFunctions()
+	{
+		for (Symbol s : SymbolTable.getPredifinedSymbols())
+		{	
+			TypeList args = tryResolvvePredefinedFuncArgs(s);
+			Type returnType = s.type();
+
+			put(s, new FuncType(args, returnType));
+		}
+	}
+
+
+	private TypeList tryResolvvePredefinedFuncArgs(Symbol s)
+	{
+		TypeList args = new TypeList();
+		// printInt() and printFloat() , printBool() require IntType, FloatType
+		// and BoolType as arguments accordingly.
+		// readInt(), readFloat() and println() require no argument
+
+		if (s.name().equals("printInt"))
+			args.append(intType);
+		else if (s.name().equals("printFloat"))
+			args.append(floatType);
+		else if (s.name().equals("printBool"))
+			args.append(boolType);
+
+		return args;
+	}
+
+
 	private void reportError(int lineNum, int charPos, String message)
 	{
 		errorBuffer.append("TypeError(" + lineNum + "," + charPos + ")");
 		errorBuffer.append("[" + message + "]" + "\n");
 	}
 
-	
+
 	private void put(Command node, Type type)
 	{
-		if (type instanceof ErrorType) 
-			reportError(node.lineNumber(), node.charPosition(), ((ErrorType)type).getMessage());
 		typeMap.put(node, type);
+
+		if (type instanceof ErrorType) 
+			reportError(node.lineNumber(), node.charPosition(), 
+					((ErrorType)type).getMessage());
 	}
 
-	
+
+	// helper methods to store functionDefinitions for performing checking on
+	// function calls
+	private void put(Symbol sym, Type args)
+	{
+		functions.put(sym, args);
+	}
+
+
 	public Type getType(Command node)
 	{
 		return typeMap.get(node);
 	}
 
-	
+
 	public boolean check(Command ast)
 	{
 		ast.accept(this);
+
+
 		return !hasError();
 	}
 
-	
+
 	public boolean hasError()
 	{
 		return errorBuffer.length() != 0;
 	}
 
-	
+
 	public String errorReport()
 	{
 		return errorBuffer.toString();
@@ -183,50 +245,53 @@ public class TypeChecker implements CommandVisitor
 	@Override
 	public void visit(ExpressionList node) 
 	{
-		Iterator<Expression> i = node.iterator();
-		while (i.hasNext())
+		TypeList types = new TypeList();
+
+		for (Expression exp : node)
 		{
-			Expression exp = i.next();
 			exp.accept(this);
+			types.append(getType((Command) exp));
 		}
+
+		// types of expressionList compose of the types of all the expressions 
+		// in the list 
+		put(node, types);
 	}
 
-	
+
 	@Override
 	public void visit(DeclarationList node) 
 	{
-		Iterator<Declaration> i = node.iterator();
-		while (i.hasNext())
-		{
-			Declaration declaration = i.next();
+		for (Declaration declaration : node)
 			declaration.accept(this);
-		}
+
 	}
 
 
 	@Override
 	public void visit(StatementList node)
 	{
-		Iterator<Statement> i = node.iterator();
-		while (i.hasNext())
-		{
-			Statement statement = i.next();
+		for (Statement statement : node)
 			statement.accept(this);
-		}
+
+		// DeclarationList should has no type
 	}
 
 
 	@Override
 	public void visit(AddressOf node) 
 	{
-		put(node, visitRetrieveType(node));
+		// type of AddressOf models the address of whatever the symbol node holds
+		// (EX: var a = : int;
+		// type of AddressOf A is Address(int).
+		put(node, new AddressType(node.symbol().type()));
 	}
 
 
 	@Override
 	public void visit(LiteralBool node) 
 	{
-		put(node, visitRetrieveType(node));
+		put(node, boolType);
 	}
 
 	@Override
@@ -235,302 +300,332 @@ public class TypeChecker implements CommandVisitor
 		put(node, floatType);
 	}
 
-	
+
 	@Override
 	public void visit(LiteralInt node) 
 	{
 		put(node, intType);
 	}
 
-	
+
 	@Override
 	public void visit(VariableDeclaration node)
 	{
 		// ensure variable's type is valid
-				Type varType = node.symbol().type();
-				
-				if ((varType instanceof IntType) 
-						|| (varType instanceof FloatType)
-						|| (varType instanceof BoolType))
-					put(node, varType);
-				else
-					put(node, new ErrorType(getInvalidVarTypeError(node)));
+		// A variable cannot be declared with type VoidType		
+		put(node, node.symbol().type() instanceof VoidType 
+				? new ErrorType(getInvalidVarTypeError(node))
+		: node.symbol().type());
 	}
 
-	
+
 	@Override
 	public void visit(ArrayDeclaration node) 
 	{
-		// ensure array's type is valid
-		Type arrayType = node.symbol().type();
-		
-		if ((arrayType instanceof IntType) 
-				|| (arrayType instanceof FloatType)
-				|| (arrayType instanceof BoolType))
-			put(node, arrayType);
-		else
-			put(node, new ErrorType(getInvalidArrayTypeError(node)));
+		// ensure ArrayDeclaration is valid (base type is not VoidType)
+		Type base = tryResolveBaseType(node.symbol().type());
+
+		put(node, ! (base instanceof VoidType) ? base 
+				: new ErrorType
+				(getInvalidArrayBaseTypeError(node.symbol().name(), base)) );
 	}
 
+	// helper function to parse the predefined base type of the array
+	// EX: array[3, int] returns int
+	// EX: array[3, array[3,float]] returns float
+	private Type tryResolveBaseType(Type type)
+	{
+		if (!(type instanceof ArrayType))
+			return type;
 
+		ArrayType array = (ArrayType) type;
+		return tryResolveBaseType(array.base());
+	}
+
+	
+	private void expectValidArguments(FunctionDefinition node)
+	{
+		List<Symbol> symbols = node.arguments();
+		for (int i = 0; i < symbols.size(); i++)
+		{
+			Type type = symbols.get(i).type();
+			
+			if (type instanceof ErrorType)
+					put(node, new ErrorType
+							(this.getHasInvalidArgument(node.function(), i, (ErrorType) type)));
+			else if (type instanceof VoidType)
+				put(node, new ErrorType
+						(this.getHasVoidArgumentError(node.function(), i)));
+		}
+	}
+	
+	
 	@Override
 	public void visit(FunctionDefinition node)
 	{
 		Symbol funcSymbol = node.function();
+		// associate FunctionDefinition with FuncType
+		expectValidArguments(node);
+		TypeList funcArgs =  getTypeListFromSymbols(node.arguments());
+		FuncType funcType = new FuncType(funcArgs, funcSymbol.type());
 
-		if (funcSymbol.name().equals("main") && 
-				!(funcSymbol.type() instanceof VoidType))
+		put(node, funcType);
+
+		// associate Function symbol with FuncType into a separate map for
+		// efficient function calls checking
+		put(funcSymbol, funcType);
+
+		boolean isVoidType = funcSymbol.type() instanceof VoidType;
+		
+		// make sure the return type of the main function is VoidTYpe
+		if (funcSymbol.name().equals("main") && !isVoidType)
 			put(node, new ErrorType(getInvalidMainFunctionSignatureError()));
 
-		if (!(funcSymbol.type() instanceof VoidType))
-		{
-			AllPathReturnChecker hasReturnChecker = new AllPathReturnChecker();
-			node.accept(hasReturnChecker);
-
-			if (!hasReturnChecker.hasReturn(node))
-				put(node, new ErrorType
-						(getNotAllPathReturnError(funcSymbol.name())));		
-			else
-				visitExpectCorrectReturnType(node);
-		}
+		if (!isVoidType && !allPathReturn(node))
+			put(node, new ErrorType
+					(getNotAllPathReturnError(funcSymbol.name())));		
 		else
-			node.body().accept(this);
-		
-		put(node, funcSymbol.type());
+			visitExpectCorrectReturnType(node);
 	}
-	
-	
+
+
+	private boolean allPathReturn(FunctionDefinition node)
+	{
+		AllPathReturnChecker hasReturnChecker = new AllPathReturnChecker();
+		node.accept(hasReturnChecker);
+
+		return hasReturnChecker.hasReturn(node);
+	}
+
+
 	private void visitExpectCorrectReturnType(FunctionDefinition node)
 	{
-		Iterator<Statement> i = node.body().iterator();
-		while (i.hasNext())
-		{
-			Statement statement = i.next();
+		for (Statement statement : node.body())
+		{			
+			// if statement is a Return Statement, then the Return type is
+			// whatever type that can be derived from its arguments. 
 			statement.accept(this);
-			
+
 			if (statement instanceof Return)
 			{
-				Type returnType = visitRetrieveType(((Return) statement).argument());
-				if (!node.function().type().equivalent(returnType))
+				Return returnState = (Return) statement;
+				// retrieve returnType from arguments since we do not associate
+				// a type to a Return node 
+				Type expectedReturnType =  getType( (Command) returnState.argument()); 
+				Type declaredReturnType = node.function().type();
+				
+				if (! (declaredReturnType instanceof VoidType) && 
+						! declaredReturnType.equivalent(expectedReturnType))
 					put((Command) statement,
-							new ErrorType(getNotMatchingReturn(node.symbol(), returnType)));
-			
+							new ErrorType(getNotMatchingReturn(node.symbol(), expectedReturnType)));
 			}
 		}
 	}
 
 
+
 	@Override
 	public void visit(Comparison node)
 	{
-		put(node, visitRetrieveType(node));
+		// call visit retrieve type to visit the left and right side of
+		// Comparison, retrieve and associate their types, and then determine
+		// and associate the type of Comparison 
+		node.leftSide().accept(this);
+		node.rightSide().accept(this);
+
+		Type leftSide = getType((Command) node.leftSide());
+		Type rightSide = getType((Command) node.rightSide());
+
+		put(node, leftSide.compare(rightSide));
 	}
 
 
-	private Type visitRetrieveType(Expression e)
-	{
-		if (e instanceof Addition)
-		{
-			Addition addition = (Addition) e;
-			return visitRetrieveType(addition.leftSide())
-					.add(visitRetrieveType(addition.rightSide()));
-		}
-		else if (e instanceof AddressOf)
-			return ((AddressOf) e).symbol().type();
-		else if (e instanceof Call)
-			return ((Call) e).function().type();
-		else if (e instanceof Comparison)
-		{
-			Comparison comparison = (Comparison) e;
-			return visitRetrieveType(comparison.leftSide())
-					.compare(visitRetrieveType(comparison.rightSide()));
-		}
-		else if (e instanceof Dereference)
-			return visitRetrieveType(((Dereference) e).expression());
-		else if (e instanceof Division)
-		{
-			Division division = (Division) e;
-			return visitRetrieveType(division.leftSide())
-					.div(visitRetrieveType(division.rightSide()));
-		}
-		else if (e instanceof Error)
-			return ((ast.Error) e).symbol().type();
-		else if (e instanceof FunctionDefinition)
-			return (((FunctionDefinition) e).function().type());
-		else if (e instanceof IfElseBranch)
-		{
-			// not sure what to return here 
-		}
-		else if (e instanceof Index)
-			return visitRetrieveType(((Index) e).base());
-		else if (e instanceof LiteralBool)
-			return boolType;
-		else if (e instanceof LiteralFloat)
-			return floatType;
-		else if (e instanceof LiteralInt)
-			return intType;
-		else if (e instanceof LogicalAnd)
-		{
-			LogicalAnd logicalAnd = (LogicalAnd) e;
-			return visitRetrieveType(logicalAnd.leftSide())
-					.and(visitRetrieveType(logicalAnd.rightSide()));
-		}
-		else if (e instanceof LogicalNot)
-		{
-			LogicalNot logicalNot = (LogicalNot) e;
-			return visitRetrieveType(logicalNot.expression()).not();
-		}
-		else if (e instanceof LogicalOr)
-		{
-			LogicalOr logicalOr = (LogicalOr) e;
-			return visitRetrieveType(logicalOr.leftSide())
-					.and(visitRetrieveType(logicalOr.rightSide()));
-		}
-		else if (e instanceof Multiplication)
-		{
-			Multiplication multiplication = (Multiplication) e;
-			return visitRetrieveType(multiplication.leftSide())
-					.mul(visitRetrieveType(multiplication.rightSide()));
-		}
-		else if (e instanceof Subtraction)
-		{
-			Subtraction subtraction = (Subtraction) e;
-			return visitRetrieveType(subtraction.leftSide())
-					.sub(visitRetrieveType(subtraction.rightSide()));
-		}
-
-		return null;
-
-
-	}
 
 
 	@Override
 	public void visit(Addition node) 
 	{
-		put(node, visitRetrieveType(node));
+		node.leftSide().accept(this);
+		node.rightSide().accept(this);
+
+		Type leftType = getType((Command) node.leftSide());
+		Type rightType = getType((Command) node.rightSide());
+
+		put(node, leftType.add(rightType));
 	}
 
 
 	@Override
 	public void visit(Subtraction node)
 	{
-		put(node, visitRetrieveType(node));
+		node.leftSide().accept(this);
+		node.rightSide().accept(this);
+
+		Type leftType = getType((Command) node.leftSide());
+		Type rightType = getType((Command) node.rightSide());
+
+		put(node, leftType.sub(rightType));
 	}
 
 
 	@Override
 	public void visit(Multiplication node)
 	{
-		put(node, visitRetrieveType(node));
+		node.leftSide().accept(this);
+		node.rightSide().accept(this);
+
+		Type leftType = getType((Command) node.leftSide());
+		Type rightType = getType((Command) node.rightSide());
+
+		put(node, leftType.mul(rightType));
 	}
 
 
 	@Override
 	public void visit(Division node) 
 	{
-		put(node, visitRetrieveType(node));
+		node.leftSide().accept(this);
+		node.rightSide().accept(this);
+
+		Type leftType = getType((Command) node.leftSide());
+		Type rightType = getType((Command) node.rightSide());
+
+		put(node, leftType.div(rightType));
 	}
 
 	@Override
 	public void visit(LogicalAnd node) 
 	{
-		put(node, visitRetrieveType(node));;
+		node.leftSide().accept(this);
+		node.rightSide().accept(this);
+
+		Type leftType = getType((Command) node.leftSide());
+		Type rightType = getType((Command) node.rightSide());
+
+		put(node, leftType.and(rightType));
 	}
 
 
 	@Override
 	public void visit(LogicalOr node)
 	{
-		put(node, visitRetrieveType(node));
+		node.leftSide().accept(this);
+		node.rightSide().accept(this);
+
+		Type leftType = getType((Command) node.leftSide());
+		Type rightType = getType((Command) node.rightSide());
+
+		put(node, leftType.or(rightType));
 	}
 
 
 	@Override
 	public void visit(LogicalNot node) 
 	{
-		put(node, visitRetrieveType(node));
+		node.expression().accept(this);
+		Command booleanExp = (Command) node.expression();
+
+		put(node, getType(booleanExp).not());
 	}
 
 
 	@Override
 	public void visit(Dereference node)
 	{
-		put(node, visitRetrieveType(node));
+		// type of Dereference is whatever type is derived from dereferencing  the Expression it holds
+		node.expression().accept(this);
+		put(node, getType((Command) node.expression()).deref());
 	}
 
 
 	@Override
 	public void visit(Index node)
 	{
-		put(node, visitRetrieveType(node));
+		// type of Index is whatever type is derived by doing 
+		// base.index(amount)
+		Command base = (Command) node.base();
+		Command amount = (Command) node.amount();
+
+		base.accept(this);
+		amount.accept(this);
+
+		put(node, getType(base).index(getType(amount)));
 	}
 
 
 	@Override
 	public void visit(Assignment node) 
 	{
-		Type source = visitRetrieveType(node.source());
-		Type des = visitRetrieveType(node.destination());
+		node.source().accept(this);
+		node.destination().accept(this);
+		
+		Type source = getType((Command) node.source());
+		Type destination = tryResolveAddressBaseType
+				(getType((Command) node.destination()));
+	
+		put(node, destination.assign(source));
+	}
 
-		put(node, des.assign(source));
+	
+	private Type tryResolveAddressBaseType(Type address)
+	{
+		if ( ! (address instanceof AddressType))
+			return address;
+		return tryResolveAddressBaseType(((AddressType) address).base());
 	}
 
 	@Override
 	public void visit(Call node) 
 	{
-		visitExpectMatchingArguments(getFunctionDefinition(node.function()), node.arguments());
+		// a function should have been declared already before it can be called
+
+		node.arguments().accept(this);
+
+		// check to see if the arguments match
+		Type declaredReturn = tryResolveFunctionType(node.function());
+		Type expectedReturn = getType((Command) node.arguments());
+
+		put(node, declaredReturn.call(expectedReturn));
 
 	}
 
 
-	private void visitExpectMatchingArguments(FunctionDefinition function, ExpressionList arguments)
+	private Type tryResolveFunctionType(Symbol funcName)
 	{
-		Type functionType = getType(function);
-		if (functionType instanceof TypeList)
-		{
-			Iterator<Type> i = ((TypeList) functionType).iterator();
-			//	while(i.hasNext())
-			//	{
-
-			//	}
-		}
-
+		return functions.get(funcName);
 	}
 
 
-	private FunctionDefinition getFunctionDefinition(Symbol function)
-	{		
-		for (Command command : typeMap.keySet())
-		{
-			if (command instanceof FunctionDefinition 
-					&& ((FunctionDefinition) command).function() == function)
-				return (FunctionDefinition) command;
-		}
-
-		return null;
-	}
 
 	@Override
 	public void visit(IfElseBranch node) 
 	{
-		Type condition = visitRetrieveType(node.condition());
-
-		if(!(condition instanceof BoolType))
-			put(node, new ErrorType(getInvalidIfElseConditionError(condition)));
-
+		node.condition().accept(this);
 		node.thenBlock().accept(this);
 		node.elseBlock().accept(this);
+
+		Type condition = getType((Command) node.condition());
+
+		// if type of condition is not BoolType, reports an error 
+		// otherwise, there is no need to associate IfElseBranch with a type 
+		if(!(condition instanceof BoolType))
+			put(node, new ErrorType(getInvalidIfElseConditionError(condition)));
 	}
 
 
 	@Override
 	public void visit(WhileLoop node) 
 	{
-		Type condition = visitRetrieveType(node.condition());
+		node.condition().accept(this);
+		Type condition = getType((Command) node.condition());
+
 		if (!(condition instanceof BoolType))
 			put(node, new ErrorType(getInvalidWhileConditionError(condition)));
+
 		node.body().accept(this);
+
+		// there is no need to associate WhileLoop with a type if there was 
+		// no type error in the condition of WhileLoop
 	}
 
 
@@ -538,6 +633,11 @@ public class TypeChecker implements CommandVisitor
 	public void visit(Return node) 
 	{
 		node.argument().accept(this);
+
+		// the code below is commented out to avoid duplicating error reports
+		// this is to be consistent with the output file 
+		// type of Return is type of whatever Expression it holds
+		//put(node, getType((Command) node.argument()));
 	}
 
 
@@ -546,6 +646,179 @@ public class TypeChecker implements CommandVisitor
 	{
 		put(node, new ErrorType(node.message()));
 	}
+
+
+	private Type visitRetrieveType(AddressOf node)
+	{
+		return new AddressType(node.symbol().type());
+	}
+
+	private Type visitRetrieveType(LiteralBool node)
+	{
+		return boolType;
+	}
+
+	private Type visitRetrieveType(LiteralFloat node)
+	{
+		return floatType;
+	}
+
+	private Type visitRetrieveType(LiteralInt node)
+	{
+		return intType;
+	}
+
+	private Type visitRetrieveType(Addition node)
+	{
+		Type leftType = visitRetrieveType((Command) node.leftSide());
+		Type rightType = visitRetrieveType((Command) node.rightSide());
+
+		return leftType.add(rightType);
+	}
+
+
+	private Type visitRetrieveType(Subtraction node)
+	{
+		Type leftType = visitRetrieveType((Command) node.leftSide());
+		Type rightType = visitRetrieveType((Command) node.rightSide());
+
+		return leftType.sub(rightType);
+	}
+
+	private Type visitRetrieveType(Multiplication node)
+	{
+		Type leftType = visitRetrieveType((Command) node.leftSide());
+		Type rightType = visitRetrieveType((Command) node.rightSide());
+
+		return leftType.mul(rightType);
+	}
+
+
+	private Type visitRetrieveType(Division node)
+	{
+		Type leftType = visitRetrieveType((Command) node.leftSide());
+		Type rightType = visitRetrieveType((Command) node.rightSide());
+
+		return leftType.div(rightType);
+	}
+
+
+	private Type visitRetrieveType(LogicalAnd node)
+	{
+		Type leftType = visitRetrieveType((Command) node.leftSide());
+		Type rightType = visitRetrieveType((Command) node.rightSide());
+
+		Type result = leftType.and(rightType);
+		put(node, result);
+
+		return result;
+	}
+
+
+	private Type visitRetrieveType(LogicalOr node)
+	{
+		Type leftType = visitRetrieveType((Command) node.leftSide());
+		Type rightType = visitRetrieveType((Command) node.rightSide());
+
+		Type result = leftType.or(rightType);
+		put(node, result);
+
+		return result;
+	}
+
+	private Type visitRetrieveType(LogicalNot node)
+	{
+		Type booleanExp = visitRetrieveType( (Command) node.expression());
+		Type result = booleanExp.not();
+		put(node, result);
+
+		return result;
+	}
+
+
+	private Type visitRetrieveType(Comparison node)
+	{
+		Type leftType = visitRetrieveType((Command) node.leftSide());
+		Type rightType = visitRetrieveType((Command) node.rightSide());
+
+		Type result= leftType.compare(rightType);
+		put(node, result);
+
+		return result;
+	}
+
+
+	private Type visitRetrieveType(Dereference node)
+	{
+		// type of Dereference is whatever type is derived from dereferencing  the Expression it holds
+		Type type = visitRetrieveType((Command) node.expression());
+
+		return type.deref();
+	}
+
+
+	private Type visitRetrieveType(Index node)
+	{
+		// type of Index is whatever type is derived by doing 
+		// base.index(amount)
+		Type base =  visitRetrieveType((Command) node.base());
+		Type amount = visitRetrieveType((Command) node.amount());
+
+		return base.index(amount);
+	}
+
+	private Type visitRetrieveType(Call node)
+	{
+		// a function should have been declared already before it can be called
+
+		// check to see if the arguments match
+		Type declaredReturn = tryResolveFunctionType(node.function());
+		Type expectedReturn = visitRetrieveType((Command) node.arguments());
+
+		return declaredReturn.call(expectedReturn);
+	}
+
+
+	private Type visitRetrieveType(Command command)
+	{
+		if (command instanceof AddressOf )
+			return visitRetrieveType((AddressOf) command);
+		else if (command instanceof LiteralBool)
+			return visitRetrieveType((LiteralBool) command);
+		else if (command instanceof LiteralFloat)
+			return visitRetrieveType((LiteralFloat) command);
+		else if (command instanceof LiteralInt)
+			return visitRetrieveType((LiteralInt) command);
+		else if (command instanceof Addition)
+			return visitRetrieveType((Addition) command);
+		else if (command instanceof Subtraction)
+			return visitRetrieveType((Subtraction) command);
+		else if (command instanceof Multiplication)
+			return visitRetrieveType((Multiplication) command);
+		else if (command instanceof Division)
+			return visitRetrieveType((Division) command);
+		else if (command instanceof LogicalAnd)
+			return visitRetrieveType((LogicalAnd) command);
+		else if (command instanceof LogicalOr)
+			return visitRetrieveType((LogicalOr) command);
+		else if (command instanceof LogicalNot)
+			return visitRetrieveType((LogicalNot) command);
+		else if (command instanceof Comparison)
+			return visitRetrieveType((Comparison) command);
+		else if (command instanceof Dereference)
+			return visitRetrieveType((Dereference) command);
+		else if (command instanceof Index)
+			return visitRetrieveType((Index) command);
+		else if (command instanceof Call)
+			return visitRetrieveType((Call) command);
+
+		else if (command instanceof Error)
+			return visitRetrieveType((Error) command);
+
+		return new ErrorType(" ");
+
+	}
+
 
 
 }
