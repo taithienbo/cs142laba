@@ -1,6 +1,7 @@
-Error type-checking file.
-TypeError(8,15)[Cannot negate int.]
-TypeError(8,3)[Cannot call func(TypeList(bool)):void using TypeList(ErrorType(Cannot negate int.)).]
-TypeError(9,15)[Cannot negate float.]
-TypeError(9,3)[Cannot call func(TypeList(bool)):void using TypeList(ErrorType(Cannot negate float.)).]
-
+SPIM Version 8.0 of January 8, 2010
+Copyright 1990-2010, James R. Larus.
+All Rights Reserved.
+See the file README for a full copyright notice.
+Loaded: /usr/lib/spim/exceptions.s
+3
+0.37500000

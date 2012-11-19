@@ -1,30 +1,32 @@
-// test addition
+// test calling functions
 
-func addInts(a:int, b:int) : int {
-  return a + b;
+func myPrintZero() : void {
+  ::printInt(0);
 }
 
-func addFloats(a:float, b:float) : float {
-  return a + b;
+func myPrintOne(a:int) : void {
+  ::printInt(a);
 }
 
-func addBools(a:bool, b:bool) : bool {
-  return a + b;
+func myPrintTwo(a:int, b:int) : void {
+  ::printInt(a);
+  ::printInt(b);
 }
 
-func addIntBool(a:int, b:bool) : void {
-  return a + b;
-}
-
-func addIntFloat(a:int, b:float) : void {
-  return a + b;
+func myPrintThree(a:int, b:int, c:int) : void {
+  ::printInt(a);
+  ::printInt(b);
+  ::printInt(c);
 }
 
 func main() : void {
-  ::printFloat(7.0);
+  ::myPrintZero();
+  ::println();
+  ::myPrintOne(1);
+  ::println();
+  ::myPrintTwo(1,2);
+  ::println();
+  ::myPrintThree(1,2,3);
+  ::println();
 }
 
-func addWithError() : void {
-  var a : int;
-  let a = 1 + 2 + 3 + false + 4 + 5 + 6;
-}

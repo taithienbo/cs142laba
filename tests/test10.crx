@@ -1,11 +1,8 @@
-// test if-else requires boolean condition
+// test if-else: true condition, missing else branch
 
 func main() : void {
-  var i:int;
-  var f:float;
-  var b:bool;
-
-  if (i) { ::printInt(7); }
-  if (f) { ::printInt(8); }
-  if (b) { ::printInt(9); }
+  if (true) {
+    ::printInt(1);
+  }
+  ::printInt(0-1);
 }

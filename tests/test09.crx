@@ -1,11 +1,7 @@
-// test logical not
+// test addition
 
 func main() : void {
-  var i:int;
-  var f:float;
-  var b:bool;
-
-  ::printBool(not i);
-  ::printBool(not f);
-  ::printBool(not b);
+  ::printInt(1+2);
+  ::println();
+  ::printFloat( 0.5-0.125);
 }

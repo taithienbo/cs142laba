@@ -87,7 +87,6 @@ public class Token
 		return tok;
 	}
 
-	
 	private Token(int lineNum, int charPos)
 	{
 		this.lineNum = lineNum;
@@ -97,17 +96,14 @@ public class Token
 		this.kind = Kind.ERROR;
 		this.lexeme = "No Lexeme Given";
 	}
-
-
+	
 	public Token (Kind kind, int lineNum, int charPos)
 	{
 		this.kind = kind;
 		this.lineNum = lineNum;
 		this.charPos = charPos;
-
 	}
 
-	
 	public Token (Kind kind, String lexeme, int lineNum, int charPos)
 	{
 		this.kind = kind;
@@ -116,7 +112,6 @@ public class Token
 		this.charPos = charPos;
 	}
 
-	
 	public int lineNumber()
 	{
 		return lineNum;
@@ -151,7 +146,6 @@ public class Token
 		return result.toString();
 	}
 
-
 	private String toStringLexeme ()
 	{
 		return "(" + lexeme + ")";
@@ -166,6 +160,7 @@ public class Token
 	{
 		return "(" + UNEXPECTED_CHARACTER + ": " + lexeme + ")";
 	}
+
 	// OPTIONAL: function to query a token about its kind
 	//           boolean is(Token.Kind kind)
 
@@ -176,10 +171,8 @@ public class Token
 		return kind;
 	}
 	
-	
 	public boolean is (Kind kind)
 	{
 		return this.kind == kind;
 	}
-
 }

@@ -1,8 +1,8 @@
 package types;
 
 
-
-public class ArrayType extends Type {
+public class ArrayType extends Type
+{
     
     private Type base;
     private int extent;
@@ -13,22 +13,24 @@ public class ArrayType extends Type {
         this.base = base;
     }
     
+    public void setBase(Type base)
+    {
+    	this.base = base;
+    }
+    
     public int extent()
     {
         return extent;
     }
-    
-    
-    @Override                                                                                                        
-    public Type index(Type that)                                                                                     
-    {         
-    	// can only index into an Address
-    	if (!(that instanceof AddressType))
+
+    @Override
+    public Type index(Type that)
+    {
+    	if ( ! (that instanceof IntType))
     		return super.index(that);
-  
+    	
     	return base;
     }
-
     
     @Override
     public Type compare(Type that)
@@ -37,7 +39,6 @@ public class ArrayType extends Type {
     		return super.compare(that);
     	return base.compare(((ArrayType) that).base());
     }
-    
     
     public Type base()
     {
@@ -51,7 +52,6 @@ public class ArrayType extends Type {
     		return base.deref();
     	return this;
     }
-    
     
     @Override
     public String toString()
@@ -70,6 +70,4 @@ public class ArrayType extends Type {
         ArrayType aType = (ArrayType)that;
         return this.extent == aType.extent && base.equivalent(aType.base);
     }
-    
-    
 }

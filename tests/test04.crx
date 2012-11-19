@@ -1,9 +1,6 @@
-// function can't have void arguments
-
-func foo(a:void) : void {
-  return ::foo(a);
-}
-
+// test global variable with mips instruction name
+var addi:int;
 func main() : void {
-  ::printInt(7);
+  let addi = ::readInt();
+  ::printInt(addi);
 }

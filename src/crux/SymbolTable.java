@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import types.BoolType;
 import types.FloatType;
 import types.IntType;
 import types.VoidType;

@@ -1,5 +1,5 @@
-// test recursion on void function
+// test printInt
 
 func main() : void {
-  return ::main();
+  ::printInt(42);
 }

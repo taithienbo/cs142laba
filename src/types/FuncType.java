@@ -2,7 +2,6 @@ package types;
 
 public class FuncType extends Type 
 {
-   
    private TypeList args;
    private Type ret;
    

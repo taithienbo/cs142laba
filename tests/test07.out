@@ -1,6 +1,6 @@
-Error type-checking file.
-TypeError(12,12)[Cannot compare bool with bool.]
-TypeError(12,3)[Function compareBool returns bool not ErrorType(Cannot compare bool with bool.).]
-TypeError(16,12)[Cannot compare int with float.]
-TypeError(16,3)[Function compareIntFloat returns bool not ErrorType(Cannot compare int with float.).]
-
+SPIM Version 8.0 of January 8, 2010
+Copyright 1990-2010, James R. Larus.
+All Rights Reserved.
+See the file README for a full copyright notice.
+Loaded: /usr/lib/spim/exceptions.s
+int?7

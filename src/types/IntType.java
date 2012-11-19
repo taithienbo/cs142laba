@@ -2,7 +2,6 @@ package types;
 
 public class IntType extends Type 
 {
-
 	
     public IntType() 
     {
@@ -51,7 +50,6 @@ public class IntType extends Type
     {
     	return this;
     }
-    
     
     @Override
     public Type compare(Type that)

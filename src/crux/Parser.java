@@ -7,7 +7,6 @@ import java.util.List;
 
 
 import types.ArrayType;
-import types.BoolType;
 import types.Type;
 import ast.AddressOf;
 import ast.ArrayDeclaration;
@@ -49,18 +48,15 @@ public class Parser
 		symbolTable = new SymbolTable();
 	}
 
-
 	private void enterScope()
 	{
 		symbolTable.increaseDepth();
 	}
 
-
 	private void exitScope()
 	{
 		symbolTable.decreseDepth();
 	}
-
 
 	private Symbol tryResolveSymbol(Token ident)
 	{
@@ -78,7 +74,6 @@ public class Parser
 		}
 	}
 
-
 	private String reportResolveSymbolError(String name, int lineNum, int charPos)
 	{
 		String message = "ResolveSymbolError(" + lineNum + "," + charPos + ")" +
@@ -87,7 +82,6 @@ public class Parser
 		errorBuffer.append(symbolTable.toString() + "\n");
 		return message;
 	}
-
 
 	private Symbol tryDeclareSymbol(Token ident)
 	{
@@ -104,7 +98,6 @@ public class Parser
 		}
 	}
 
-
 	private String reportDeclareSymbolError(String name, int lineNum, int charPos)
 	{
 		String message = "DeclareSymbolError(" + lineNum + "," + charPos + ")[" + name + " already exists.]";
@@ -112,7 +105,6 @@ public class Parser
 		errorBuffer.append(symbolTable.toString() + "\n");
 		return message;
 	}    
-
 
 	// Helper Methods ==========================================
 	private Token expectRetrieve(Token.Kind kind) throws IOException
@@ -124,7 +116,6 @@ public class Parser
 		throw new QuitParseException(errorMessage);
 		//return ErrorToken(errorMessage);
 	}
-
 
 	private Token expectRetrieve(NonTerminal nt) throws IOException
 	{
@@ -146,11 +137,9 @@ public class Parser
 		return null;
 	}
 
-
 	// Grammar Rule Reporting ==========================================
 	private int parseTreeRecursionDepth = 0;
 	private StringBuffer parseTreeBuffer = new StringBuffer();
-
 
 	public String parseTreeReport()
 	{
@@ -170,7 +159,6 @@ public class Parser
 		return message;
 	}
 
-
 	private String reportSyntaxError(Token.Kind kind)
 	{
 		String message = "SyntaxError(" + lineNumber() + "," + charPosition()
@@ -180,18 +168,15 @@ public class Parser
 		return message;
 	}
 
-
 	public String errorReport()
 	{
 		return errorBuffer.toString();
 	}
 
-
 	public boolean hasError()
 	{
 		return errorBuffer.length() != 0;
 	}
-
 
 	private class QuitParseException extends RuntimeException
 	{
@@ -202,12 +187,10 @@ public class Parser
 		}
 	}
 
-
 	private int lineNumber()
 	{
 		return currentToken.lineNumber();
 	}
-
 
 	private int charPosition()
 	{
@@ -218,13 +201,11 @@ public class Parser
 	private Scanner scanner;
 	private Token currentToken;
 
-
 	public Parser(Scanner scanner) throws IOException
 	{
 		this.scanner = scanner;
 		currentToken = scanner.next();
 	}
-
 
 	public Command parse() throws IOException
 	{
@@ -236,19 +217,16 @@ public class Parser
 		}
 	}
 
-
 	// Helper Methods ==========================================
 	private boolean have(Token.Kind kind)
 	{
 		return currentToken.is(kind);
 	}
 
-
 	private boolean have(NonTerminal nt)
 	{
 		return nt.firstSet().contains(currentToken.kind());
 	}
-
 
 	private boolean accept(Token.Kind kind) throws IOException
 	{
@@ -260,14 +238,11 @@ public class Parser
 		return false;
 	}    
 
-
 	// Typing System ===================================
-
 	private Type tryResolveType(String typeStr)
 	{
 		return Type.getBaseType(typeStr);
 	}
-
 
 	private boolean accept(NonTerminal nt) throws IOException
 	{
@@ -279,7 +254,6 @@ public class Parser
 		return false;
 	}
 
-
 	private boolean expect(Token.Kind kind) throws IOException
 	{
 		if (accept(kind))
@@ -288,7 +262,6 @@ public class Parser
 		throw new QuitParseException(errorMessage);
 		//return false;
 	}
-
 
 	private boolean expect(NonTerminal nt) throws IOException
 	{
@@ -323,21 +296,19 @@ public class Parser
 					Value.FALSE);
 	}
 
-
 	// designator := IDENTIFIER { "[" expression0 "]" } .
 	public Expression designator() throws IOException
 	{
 		int lineNumber = lineNumber();
 		int charPosition = charPosition();
 
-		
 		Token base = expectRetrieve(Token.Kind.IDENTIFIER);
 		Symbol symbol = tryResolveSymbol(base);
 		
 		AddressOf address = 
 				new AddressOf(lineNumber, charPosition,
 						symbol);
-
+		
 		// set index to the base address to correctly represent one-dimensional 
 		// array
 		Expression index = address;
@@ -350,23 +321,19 @@ public class Parser
 			// dimensional array in which each element is also an array
 			index = new Index(lineNumber, charPosition,
 					index, amount);
-
 			expect(Token.Kind.CLOSE_BRACKET);
 		}
-
 		return index;
 	}
-
 
 	// call-expression ";"
 	public Statement callStatement () throws IOException
 	{
 		Statement callStatement = (Statement) callExpression ();
 		expect (Token.Kind.SEMICOLON);
-
+		
 		return callStatement;
 	}
-
 
 	// expression-list := [ expression0 { "," expression0 } ] .
 	public ExpressionList expressionList () throws IOException
@@ -380,7 +347,6 @@ public class Parser
 			while (accept (Token.Kind.COMMA))
 				expressionList.add(expression0());
 		}
-
 		return expressionList;
 	}
 
@@ -403,7 +369,6 @@ public class Parser
 		return new Call(lineNumber, charPosition, func, arguments);
 	}
 
-
 	// "not" expression3 | "(" expression0 ")"
 	// | designator | call-expression | literal .
 	public Expression expression3 () 	throws IOException
@@ -416,13 +381,11 @@ public class Parser
 			expression = new LogicalNot
 			(lineNumber, charPosition, 
 					expression3());
-
 		else if (accept (Token.Kind.OPEN_PAREN))
 		{
 			expression = expression0 ();
 			expect (Token.Kind.CLOSE_PAREN);
 		}
-	
 		else if (have (NonTerminal.DESIGNATOR))
 		{
 			tryResolveSymbol(currentToken);
@@ -441,7 +404,6 @@ public class Parser
 		return expression;
 	}
 
-
 	// expression3 { op2 expression3 } .
 	public Expression expression2 () throws IOException
 	{		
@@ -453,10 +415,8 @@ public class Parser
 
 			leftSide = Command.newExpression(leftSide, operatorToken, rightSide);
 		}
-
 		return leftSide;
 	}
-
 
 	// expression2 { op1  expression2 } .
 	public Expression expression1 () throws IOException
@@ -470,10 +430,8 @@ public class Parser
 			Expression rightSide = expression2();
 			leftSide = Command.newExpression(leftSide, operator, rightSide);
 		}
-
 		return leftSide;
 	}
-
 
 	// expression1 [ op0 expression1 ] .
 	public Expression expression0 () throws IOException
@@ -491,7 +449,6 @@ public class Parser
 		return leftSide;
 	}
 
-
 	// "return" expression0 ";" 
 	public Statement returnStatement () throws IOException
 	{
@@ -505,7 +462,6 @@ public class Parser
 
 		return new Return(lineNumber, charPosition, arguments);
 	}
-
 
 	// "while" expression0 statement-block .
 	public Statement whileStatement () throws IOException
@@ -525,7 +481,6 @@ public class Parser
 		return new WhileLoop(lineNumber, charPosition,
 				condition, body);
 	}
-
 
 	//  "let" designator "=" expression0 ";"
 	public Statement assignmentStatement () throws IOException
@@ -549,7 +504,6 @@ public class Parser
 		return new Assignment(lineNumber, charPosition,
 				destination, source);
 	}
-
 
 	// "if" expression0 statement-block [ "else" statement-block ]
 	public Statement ifStatement () throws IOException
@@ -577,11 +531,9 @@ public class Parser
 			elseBlock = statementBlock ();
 			exitScope();
 		}
-
 		return new IfElseBranch (lineNumber, charPosition,
 				condition, thenBlock, elseBlock);
 	}
-
 
 	// variable-declaration  | call-statement | assignment-statement
 	// | if-statement | while-statement | return-statement .
@@ -604,7 +556,6 @@ public class Parser
 			(reportSyntaxError (NonTerminal.STATEMENT));
 	}
 
-
 	// { statement }
 	public StatementList statementList () throws IOException
 	{
@@ -615,7 +566,6 @@ public class Parser
 
 		return statementList;
 	}
-
 
 	// "{" statement-list "}"
 	public StatementList statementBlock () throws IOException
@@ -628,7 +578,6 @@ public class Parser
 
 		return statementList;
 	}
-
 
 	// IDENTIFIER ":" type
 	public Symbol parameter () throws IOException
@@ -644,7 +593,6 @@ public class Parser
 
 		return symbol;
 	}
-
 
 	// parameter-list := [ parameter { "," parameter } ] .
 	public List<Symbol> parameterList () throws IOException
@@ -662,7 +610,6 @@ public class Parser
 
 		return parameterList;
 	}
-
 
 	// "func" IDENTIFIER "(" parameter-list ")" ":" type statement-block
 	public FunctionDefinition functionDefinition () throws IOException
@@ -696,7 +643,6 @@ public class Parser
 				func, args, body);
 	}
 
-
 	// type := IDENTIFIER .
 	public Type type () throws IOException
 	{
@@ -704,7 +650,6 @@ public class Parser
 		return Type.getBaseType(token.lexeme());
 	}
 	
-
 	// "array" IDENTIFIER ":" type "[" INTEGER "]" { "[" INTEGER "]" } ";"
 	public ArrayDeclaration arrayDeclaration () throws IOException
 	{
@@ -726,30 +671,37 @@ public class Parser
 		
 		expect (Token.Kind.OPEN_BRACKET);
 		
-		int amount = expectInteger();
-		
-		ArrayType array = new ArrayType(amount, baseType);
+		ArrayList<Integer> dimensions = new ArrayList<Integer>();
+		dimensions.add(expectInteger());
 		
 		expect (Token.Kind.CLOSE_BRACKET);
 
 		while (accept (Token.Kind.OPEN_BRACKET))
 		{
-			amount = expectInteger();
 			// model multi-dimensional array
-			array = new ArrayType(amount,  array);
-			
+			dimensions.add(expectInteger());
 			expect (Token.Kind.CLOSE_BRACKET);
 		}
-
-		arraySymbol.setType(array);
+		
+		arraySymbol.setType(buildArray(baseType, dimensions));
 		
 		expect (Token.Kind.SEMICOLON);
 
 		return arrayDeclaration;
 	}
+	
+	private Type buildArray(Type baseType, List<Integer> dimensions)
+	{
+		Type array = baseType;
 
-	
-	
+		for (int i = dimensions.size() - 1; i >= 0; i--)
+		{
+			array = new ArrayType(dimensions.get(i), array );
+			
+		}
+		
+		return array;
+	}
 
 	// ">=" | "<=" | "!=" | "==" | ">" | "<"
 	public Token op0 () throws IOException
@@ -757,20 +709,17 @@ public class Parser
 		return expectRetrieve (NonTerminal.OP0);
 	}
 
-
 	// "+" | "-" | "or" .
 	public Token op1 () throws IOException
 	{
 		return expectRetrieve (NonTerminal.OP1);
 	}
 
-
 	// "*" | "/" | "and" .
 	public Token op2 () throws IOException 
 	{
 		return expectRetrieve(NonTerminal.OP2);
 	}
-
 
 	// "var" IDENTIFIER ":" type ";"
 	public VariableDeclaration variableDeclaration () throws IOException
@@ -797,7 +746,6 @@ public class Parser
 		return variableDeclaration;
 	}
 
-
 	//  variable-declaration | array-declaration | function-definition .
 	public Declaration declaration () throws IOException
 	{
@@ -812,7 +760,6 @@ public class Parser
 			(reportSyntaxError (NonTerminal.DECLARATION));
 	}
 
-
 	// { declaration }
 	public DeclarationList declarationList () throws IOException
 	{
@@ -825,7 +772,6 @@ public class Parser
 
 		return declarationList;
 	}
-
 
 	// program := declaration-list EOF .
 	public DeclarationList program() throws IOException

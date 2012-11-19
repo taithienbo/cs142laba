@@ -14,13 +14,11 @@ public class FloatType extends Type
         return "float";
     }
 
-    
     @Override
     public Type deref()
     {
     	return this;
     }
-    
     
     @Override
     public boolean equivalent(Type that)
@@ -31,8 +29,7 @@ public class FloatType extends Type
             return false;
         return true;
     }
-    
-    
+      
     @Override
     public Type add(Type that)
     {
@@ -40,8 +37,7 @@ public class FloatType extends Type
     		return super.add(that);
     	return new FloatType();	
     }
-    
-    
+       
     @Override
     public Type sub(Type that)
     {
@@ -50,7 +46,6 @@ public class FloatType extends Type
     	return new FloatType();
     }
     
-    
     @Override
     public Type mul(Type that)
     {
@@ -58,8 +53,7 @@ public class FloatType extends Type
     		return super.mul(that);
     	return new FloatType();
     }
-    
-    
+     
     @Override
     public Type div(Type that)
     {
@@ -67,8 +61,7 @@ public class FloatType extends Type
     		return super.div(that);
     	return new FloatType();
     }
-    
-    
+       
     @Override
     public Type compare(Type that)
     {
@@ -76,8 +69,7 @@ public class FloatType extends Type
             return super.compare(that);
         return new BoolType();
     }
-
-    
+ 
     @Override
     public Type assign(Type source)
     {

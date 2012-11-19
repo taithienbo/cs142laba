@@ -1,6 +1,6 @@
-Error type-checking file.
-TypeError(16,1)[Not all paths in function missingReturn1 have a return.]
-TypeError(22,1)[Not all paths in function missingReturn2 have a return.]
-TypeError(30,1)[Not all paths in function missingReturn3 have a return.]
-TypeError(45,1)[Not all paths in function missingReturn4 have a return.]
-
+SPIM Version 8.0 of January 8, 2010
+Copyright 1990-2010, James R. Larus.
+All Rights Reserved.
+See the file README for a full copyright notice.
+Loaded: /usr/lib/spim/exceptions.s
+0-1

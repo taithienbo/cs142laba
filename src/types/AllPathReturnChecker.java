@@ -43,9 +43,6 @@ public class AllPathReturnChecker implements CommandVisitor
 		allPathReturnMap = new HashMap<Command, Boolean>();
 	}
 	
-	
-	
-	
 	@Override
 	public void visit(ExpressionList node) 
 	{
@@ -54,7 +51,6 @@ public class AllPathReturnChecker implements CommandVisitor
 			i.next().accept(this);
 	}
 
-	
 	public void put(Command node, Boolean value)
 	{
 		allPathReturnMap.put(node, value);
@@ -67,7 +63,6 @@ public class AllPathReturnChecker implements CommandVisitor
 		put(node, false);
 	}
 
-	
 	@Override
 	public void visit(StatementList node) 
 	{
@@ -81,7 +76,6 @@ public class AllPathReturnChecker implements CommandVisitor
 	{
 		put(node, false);
 	}
-
 	
 	@Override
 	public void visit(LiteralBool node) 
@@ -89,7 +83,6 @@ public class AllPathReturnChecker implements CommandVisitor
 		put(node, false);	
 	}
 
-	
 	@Override
 	public void visit(LiteralFloat node) 
 	{
@@ -107,7 +100,7 @@ public class AllPathReturnChecker implements CommandVisitor
 	{
 		put(node, false);
 	}
-
+	
 	@Override
 	public void visit(ArrayDeclaration node)
 	{
@@ -120,13 +113,11 @@ public class AllPathReturnChecker implements CommandVisitor
 		return allPathReturnMap.get(node);
 	}
 	
-	
 	@Override
 	public void visit(FunctionDefinition node) 
 	{
 		put(node, visitRetrieveHasReturn(node));
 	}
-	
 	
 	private boolean visitRetrieveHasReturn(FunctionDefinition funcDef)
 	{
@@ -137,12 +128,10 @@ public class AllPathReturnChecker implements CommandVisitor
 		return false;
 	}
 	
-	
 	private boolean visitRetrieveHasReturn(Statement statement)
 	{
 		return statement instanceof Return;
 	}
-
 	
 	private boolean visitRetrieveHasReturn(StatementList statementList)
 	{
@@ -153,7 +142,6 @@ public class AllPathReturnChecker implements CommandVisitor
 		return false;
 	}
 	
-	
 	private boolean visitRetrieveHasReturn(IfElseBranch ifElse)
 	{
 		if (visitRetrieveHasReturn(ifElse.thenBlock()))
@@ -161,12 +149,10 @@ public class AllPathReturnChecker implements CommandVisitor
 		return visitRetrieveHasReturn(ifElse.thenBlock());
 	}
 	
-	
 	@Override
 	public void visit(Addition node) 
 	{
-		put(node, false);
-		
+		put(node, false);	
 	}
 
 	@Override
@@ -260,6 +246,4 @@ public class AllPathReturnChecker implements CommandVisitor
 		put(node, false);
 		
 	}
-
-
 }

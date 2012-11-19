@@ -1,14 +1,4 @@
-// test return type matches function
-
-func myInt(a:int) : int {
-  return a;
-}
-
-func myIntError(a:float) : int {
-  return a;
-}
-
+// test printFloat
 func main() : void {
-  ::myInt(7);
-  ::myIntError(7.0);
+  ::printFloat(0.5);
 }

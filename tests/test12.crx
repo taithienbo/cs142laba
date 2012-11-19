@@ -1,53 +1,10 @@
-// test functions with value must have return
-
-func validReturn1(a:int) : int {
-  return a;
-}
-
-func validReturn2(a:int) : int {
-  if (true) {
-    let a = 3;
-  } else {
-    return a;
-  }
-  return 4;
-}
-
-func missingReturn1(a:int) : int {
-  if (true) {
-    return a;
-  }
-}
-
-func missingReturn2(a:int) : int {
-  if (true) {
-    return a;
-  } else {
-    let a = 3;
-  }
-}
-
-func missingReturn3(a:int) : int {
-  if (false) {
-    let a = 3;
-  } else {
-    return a;
-  }
-}
-
-func validReturn3(a:int) : int {
-  while (false) {
-    return a;
-  }
-  return a;
-}
-
-func missingReturn4(a:int) : int {
-  while(true) {
-    return a;
-  }
-}
+// test if-else: false condition, no return in else branch
 
 func main() : void {
-  ::printInt(8);
+  if (false) {
+    ::printInt(1);
+  } else {
+    ::printInt(0);
+  }
+  ::printInt(0-1);
 }
