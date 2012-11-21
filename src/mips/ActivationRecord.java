@@ -29,6 +29,8 @@ public class ActivationRecord
             ArrayType aType = (ArrayType)type;
             return aType.extent() * numBytes(aType.base());
         }
+        if (type instanceof BoolType)
+        	return 4;
         throw new RuntimeException("No size known for " + type);
     }
     

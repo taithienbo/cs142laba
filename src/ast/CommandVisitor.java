@@ -37,4 +37,5 @@ public interface CommandVisitor
 	public void visit(Return node);
 	
 	public void visit(Error node);
+
 }

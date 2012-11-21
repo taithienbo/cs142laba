@@ -88,7 +88,7 @@ public class CodeGen implements ast.CommandVisitor {
     }
 
     @Override
-    public void visit(ReadSymbol node) {
+    public void visit(AddressOf node) {
         throw new RuntimeException("Implement this");
     }
 
@@ -199,7 +199,7 @@ public class CodeGen implements ast.CommandVisitor {
 
     @Override
     public void visit(ast.Error node) {
-        String message = "CodeGen cannot compile a " + node);
+        String message = "CodeGen cannot compile a " + node;
         errorBuffer.append(message);
         throw new CodeGenException(message);
     }
