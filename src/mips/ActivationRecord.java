@@ -14,6 +14,11 @@ public class ActivationRecord
     private HashMap<Symbol, Integer> locals;
     private HashMap<Symbol, Integer> arguments;
     
+    
+  //  A function's activation record stores bookkeeping information such as the
+  // return address and caller frame pointer and contains additional space for 
+  // local variables
+    
     public static ActivationRecord newGlobalFrame()
     {
         return new GlobalFrame();
