@@ -11,6 +11,7 @@ import ast.Call;
 import ast.Command;
 import ast.CommandVisitor;
 import ast.Comparison;
+import ast.Declaration;
 import ast.DeclarationList;
 import ast.Dereference;
 import ast.Division;
@@ -244,6 +245,30 @@ public class AllPathReturnChecker implements CommandVisitor
 	public void visit(Error node)
 	{
 		put(node, false);
+		
+	}
+
+	@Override
+	public void visit(Command node) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Expression node) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Declaration node) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Statement node) {
+		// TODO Auto-generated method stub
 		
 	}
 }

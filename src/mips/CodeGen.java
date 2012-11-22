@@ -38,11 +38,13 @@ public class CodeGen implements ast.CommandVisitor {
     
     public boolean generate(Command ast)
     {
-        try {
+        try 
+        {
             currentFunction = ActivationRecord.newGlobalFrame();
             ast.accept(this);
             return !hasError();
-        } catch (CodeGenException e) {
+        } catch (CodeGenException e) 
+        {
             return false;
         }
     }
@@ -53,47 +55,56 @@ public class CodeGen implements ast.CommandVisitor {
     }
 
     @Override
-    public void visit(Command node) {
+    public void visit(Command node)
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(Expression node) {
+    public void visit(Expression node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(Declaration node) {
+    public void visit(Declaration node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(Statement node) {
+    public void visit(Statement node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(ExpressionList node) {
+    public void visit(ExpressionList node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(DeclarationList node) {
+    public void visit(DeclarationList node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(StatementList node) {
+    public void visit(StatementList node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(AddressOf node) {
+    public void visit(AddressOf node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(LiteralBool node) {
+    public void visit(LiteralBool node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
@@ -103,7 +114,8 @@ public class CodeGen implements ast.CommandVisitor {
     }
 
     @Override
-    public void visit(LiteralInt node) {
+    public void visit(LiteralInt node)
+    {
         throw new RuntimeException("Implement this");
     }
 
@@ -113,12 +125,28 @@ public class CodeGen implements ast.CommandVisitor {
     }
 
     @Override
-    public void visit(ArrayDeclaration node) {
+    public void visit(ArrayDeclaration node) 
+    {
+    	// todo: notify current Activation Record to record an offset
+    	// (from the frame pointer) where the symbol will be stored at runtime
+    	
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(FunctionDefinition node) {
+    public void visit(FunctionDefinition node) 
+    {
+    	/**
+    	 * Each time the CodeGen visitor encounters a FunctionDefinition, it
+    	 * can create a new ActivationRecord object to model that function's 
+    	 * scope. ActivationRecord's are linked via a parent field, that 
+    	 * allows symbol lookup to chain upwards. If a symbol isn't found in 
+    	 * the inner-most scope, a parent ActivationRecord supplies the address
+    	 * (Because Crux does not support lexically nested functions, our 
+    	 * implementation really only has 2 scope: local and gloabl.) Once the
+    	 * CodGen visitor has finished assembling the function body, it can pop
+    	 * the current ActivationRecord and restore the previous one.
+    	 */
         throw new RuntimeException("Implement this");
     }
 
