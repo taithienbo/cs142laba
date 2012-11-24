@@ -31,7 +31,8 @@ public class CodeGen implements ast.CommandVisitor {
     private class CodeGenException extends RuntimeException
     {
         private static final long serialVersionUID = 1L;
-        public CodeGenException(String errorMessage) {
+        public CodeGenException(String errorMessage) 
+        {
             super(errorMessage);
         }
     }
@@ -43,7 +44,8 @@ public class CodeGen implements ast.CommandVisitor {
             currentFunction = ActivationRecord.newGlobalFrame();
             ast.accept(this);
             return !hasError();
-        } catch (CodeGenException e) 
+        } 
+        catch (CodeGenException e) 
         {
             return false;
         }
@@ -81,19 +83,22 @@ public class CodeGen implements ast.CommandVisitor {
     @Override
     public void visit(ExpressionList node) 
     {
-        throw new RuntimeException("Implement this");
+    	for (Expression expression : node)
+    		expression.accept(this);
     }
 
     @Override
     public void visit(DeclarationList node) 
     {
-        throw new RuntimeException("Implement this");
+       for (Declaration declaration : node)
+    	   declaration.accept(this);
     }
 
     @Override
     public void visit(StatementList node) 
     {
-        throw new RuntimeException("Implement this");
+       for (Statement statement : node)
+    	   statement.accept(this);
     }
 
     @Override
@@ -109,7 +114,8 @@ public class CodeGen implements ast.CommandVisitor {
     }
 
     @Override
-    public void visit(LiteralFloat node) {
+    public void visit(LiteralFloat node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
@@ -120,7 +126,8 @@ public class CodeGen implements ast.CommandVisitor {
     }
 
     @Override
-    public void visit(VariableDeclaration node) {
+    public void visit(VariableDeclaration node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
@@ -129,7 +136,7 @@ public class CodeGen implements ast.CommandVisitor {
     {
     	// todo: notify current Activation Record to record an offset
     	// (from the frame pointer) where the symbol will be stored at runtime
-    	
+  
         throw new RuntimeException("Implement this");
     }
 
@@ -147,26 +154,31 @@ public class CodeGen implements ast.CommandVisitor {
     	 * CodGen visitor has finished assembling the function body, it can pop
     	 * the current ActivationRecord and restore the previous one.
     	 */
+    	
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(Addition node) {
+    public void visit(Addition node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(Subtraction node) {
+    public void visit(Subtraction node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(Multiplication node) {
+    public void visit(Multiplication node) 
+    {
         throw new RuntimeException("Implement this");
     }
 
     @Override
-    public void visit(Division node) {
+    public void visit(Division node)
+    {
         throw new RuntimeException("Implement this");
     }
 
