@@ -36,11 +36,6 @@ public interface CommandVisitor
 	public void visit(WhileLoop node);
 	public void visit(Return node);
 	
-	public void visit(Error node);
-	public void visit(Command node);
-	public void visit(Expression node);
-	public void visit(Declaration node);
-	public void visit(Statement node);
-	
+	public void visit(Error node);	
 
 }

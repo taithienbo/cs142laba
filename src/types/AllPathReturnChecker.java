@@ -248,27 +248,4 @@ public class AllPathReturnChecker implements CommandVisitor
 		
 	}
 
-	@Override
-	public void visit(Command node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Expression node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Declaration node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Statement node) {
-		// TODO Auto-generated method stub
-		
-	}
 }

@@ -1,4 +1,4 @@
-package mips;
+ package mips;
 
 import java.util.HashMap;
 
@@ -79,12 +79,17 @@ public class ActivationRecord
     
     public void add(Program prog, ast.VariableDeclaration var)
     {
-        throw new RuntimeException("implement adding variable to local function space");
+    	//prog.appendInstruction(var.symbol().type());
+    	int space = numBytes(var.symbol().type());
+    	stackSize += space;
+    	locals.put(var.symbol(),space);
     }
     
     public void add(Program prog, ast.ArrayDeclaration array)
     {
-        throw new RuntimeException("implement adding array to local function space");
+    	int offset = numBytes(array.symbol().type());
+    	stackSize += offset;
+    	locals.put(array.symbol(), offset);
     }
     
     public void getAddress(Program prog, String reg, Symbol sym)

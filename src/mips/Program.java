@@ -3,10 +3,13 @@ package mips;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Vector;
-
+import types .*;
 public class Program {
     private Vector<String> codeSegment;
     private Vector<String> dataSegment;
+    
+    private Type intType = new IntType();
+    private Type floatType = new FloatType();
     
     private int labelCounter;
     
@@ -54,39 +57,88 @@ public class Program {
     // Push an integer register on the stack
     public void pushInt(String reg)
     {
-        throw new RuntimeException("Implement pushing int register value to stack");
+    	// first decrement stack pointer and then push (save) value to stack
+    	appendAddInstruction("$sp", "$sp", (-1 * ActivationRecord.numBytes(intType)));
+    	appendSWInstruction(reg, "0($sp");
+    }
+    
+    // helper method for appending addi instruction: rt = rs + imm 
+    private void appendAddInstruction(String destination, String source, int value)
+    {
+    	appendInstruction("addi " + destination + ", " + source + ", " + value);
+    }
+    
+    // helper method to append sw instruction (sw rt address) store the word
+    // in rt to address
+    private void appendSWInstruction(String reg, String address)
+    {
+    	appendInstruction("sw " + reg + ", " + address);
+    }
+    
+    private void appendSubInstruction(String rt, String rs, int value)
+    {
+    	appendInstruction("subu " + rt + ", " + rs + ", " + value);
+    }
+    
+    private void appendLWInstruction(String rd, String address)
+    {
+    	appendInstruction("lw " + rd + ", " + address);
     }
     
     // Push a single precision floating point register on the stack
     public void pushFloat(String reg)
     {
-        throw new RuntimeException("Implement pushing float register value to stack");
+    	appendAddInstruction("$sp", "$sp", (-1 * ActivationRecord.numBytes(floatType)));
+    	appendSWInstruction(reg, "0$sp");
     }
     
-    // Pop an integer from the stack into register reg
+    // Pop an integer from the stack into register
     public void popInt(String reg)
     {
-        throw new RuntimeException("Implement popping int from stack to register");
+    	// opposite to push, increment stack pointer before loading value into
+    	// register
+    	appendAddInstruction("$sp", "$sp", ActivationRecord.numBytes(intType));
+    	appendLWInstruction(reg, "0$sp");
     }
     
     // Pop a floating point value from the stack into register reg
     public void popFloat(String reg)
     {
-        throw new RuntimeException("Implement popping floating point from stack to register");
+    	appendAddInstruction("$sp", "$sp", ActivationRecord.numBytes(floatType));
+    	appendLWInstruction(reg, "0$sp");
     }
     
     // Insert a function prologue at position pos
     public void insertPrologue(int pos, int frameSize)
     {
         ArrayList<String> prologue = new ArrayList<String>();
-        throw new RuntimeException("Implement creation of function prologue");
+       
+        // caller first allocate some space for bookeeping values
+        prologue.add("subu $sp, $sp, 8");
+        // save caller's frame pointer and return address
+        prologue.add("sw $fp, 0($sp)");
+        prologue.add("sw $ra, 0($sp)");
+        // update frame pointer to reference the function's activation record
+        prologue.add("addi $fp, $sp, 8");
+        // reserve enough space on the stack to store all the variables and
+        // arrays local to this function
+        prologue.add("subu $sp, $sp, " + frameSize);
+      
         codeSegment.addAll(pos, prologue);
     }
     
     // Append a function epilogue
     public void appendEpilogue(int frameSize)
     {
-        throw new RuntimeException("Implement creation of function epilogue");
+    	// pop off the stack reserves for local variables and arrays
+    	appendInstruction("addu $sp, $sp, " + frameSize);
+    	// restore return address and caller's frame pointer
+    	appendInstruction("lw $ra, 4($sp)");
+    	appendInstruction("lw $fp, 0($sp)");
+    	// restore the position of stack pointer
+    	appendInstruction("addu $sp, $sp, 8");
+    	// transfer control back to the caller
+    	appendInstruction("jr $ra");
     }
 
     // Insert code that terminates the program

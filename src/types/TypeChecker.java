@@ -575,7 +575,7 @@ public class TypeChecker implements CommandVisitor
 	public void visit(Return node) 
 	{
 		node.argument().accept(this);
-
+ 
 		// the code below is commented out to avoid duplicating error reports
 		// this is to be consistent with the output file 
 		// type of Return is type of whatever Expression it holds
@@ -586,29 +586,5 @@ public class TypeChecker implements CommandVisitor
 	public void visit(ast.Error node) 
 	{
 		put(node, new ErrorType(node.message()));
-	}
-
-	@Override
-	public void visit(Command node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Expression node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Declaration node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Statement node) {
-		// TODO Auto-generated method stub
-		
 	}
 }
