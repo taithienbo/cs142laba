@@ -94,7 +94,8 @@ public class ActivationRecord
     
     public void getAddress(Program prog, String reg, Symbol sym)
     {
-        throw new RuntimeException("implement accessing address of local or parameter symbol");
+    	prog.appendInstruction("la " + reg + ", " + sym + "# load the address of sym to reg");
+      //  throw new RuntimeException("implement accessing address of local or parameter symbol");
     }
 }
 
@@ -112,12 +113,14 @@ class GlobalFrame extends ActivationRecord
     @Override
     public void add(Program prog, ast.VariableDeclaration var)
     {
+    	prog.appendData(mangleDataname(var.symbol().name()));
         throw new RuntimeException("implement adding variable to global data space");
     }    
     
     @Override
     public void add(Program prog, ast.ArrayDeclaration array)
     {
+    	
         throw new RuntimeException("implement adding array to global data space");
     }
         

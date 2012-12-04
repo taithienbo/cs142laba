@@ -390,7 +390,7 @@ public class Parser
 		{
 			tryResolveSymbol(currentToken);
 			expression = new Dereference
-					(lineNumber, charPosition, designator ());
+					(lineNumber, charPosition, designator());
 		}	
 		else if (have (NonTerminal.CALL_EXPRESSION))
 		{
