@@ -97,7 +97,8 @@ public class Program {
     public void pushFloat(String reg)
     {
     	appendAddInstruction("$sp", "$sp", (-1 * ActivationRecord.numBytes(floatType)));
-    	appendSWInstruction(reg, "0$sp");
+    	//appendSWInstruction(reg, "0($sp)");
+    	appendInstruction("s.s " + reg + ", " + "0($sp)");
     }
     
     // Pop an integer from the stack into register

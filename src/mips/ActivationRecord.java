@@ -106,8 +106,25 @@ public class ActivationRecord
     
     public void getAddress(Program prog, String reg, Symbol sym)
     {
-    	prog.appendInstruction("la " + reg + ", " + sym + "# load the address of sym to reg");
-      //  throw new RuntimeException("implement accessing address of local or parameter symbol");
+    	// need to check in locals first, then arguments, then the parent's 
+    	// activation record
+    	if (locals.containsKey(sym))
+    	{
+    		// if this is in local (it is a variable), the address 
+    		// is the position of the frame pointer -8 - the offset of the 
+    		// variable
+    		prog.appendInstruction("addi " + reg + ", $fp, " 
+    						+ (fixedFrameSize -locals.get(sym)));
+    	}
+    	else if (arguments.containsKey(sym))
+    	{
+    		// if this is an argument, the address is the position of the frame
+    		// pointer, which point to the first argument + the offset of the 
+    		// argument
+    		prog.appendInstruction("addi " + reg + ", $fp, " + arguments.get(sym));
+    	}
+    	else
+    		parent.getAddress(prog, reg, sym);
     }
 }
 
@@ -125,20 +142,20 @@ class GlobalFrame extends ActivationRecord
     @Override
     public void add(Program prog, ast.VariableDeclaration var)
     {
-    	prog.appendData(mangleDataname(var.symbol().name()));
-        throw new RuntimeException("implement adding variable to global data space");
+    	prog.appendData(mangleDataname(var.symbol().name())
+    			+ ": " + "	.space 	" +	numBytes(var.symbol().type()));
     }    
     
     @Override
     public void add(Program prog, ast.ArrayDeclaration array)
     {
-    	
-        throw new RuntimeException("implement adding array to global data space");
+    	prog.appendData(mangleDataname(array.symbol().name()
+    			+ ": " + "	.space	" +	numBytes(array.symbol().type())));
     }
         
     @Override
     public void getAddress(Program prog, String reg, Symbol sym)
     {
-        throw new RuntimeException("implement accessing address of global symbol");
+    	prog.appendInstruction("la " + reg + ", " + mangleDataname(sym.name()));
     }
 }

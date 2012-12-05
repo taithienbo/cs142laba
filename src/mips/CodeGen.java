@@ -162,7 +162,7 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(LiteralFloat node) 
 	{
-		String rd = makeTempRegister(regCounter);
+		String rd = makeFloatRegister(regCounter);
 		
 		// add the float value into register
 		// not sure if this works
@@ -630,11 +630,4 @@ public class CodeGen implements ast.CommandVisitor {
 		errorBuffer.append(message);
 		throw new CodeGenException(message);
 	}
-
-    
-  
-    
-
-
-
 }
