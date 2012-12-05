@@ -37,6 +37,13 @@ public class ActivationRecord
         }
         if (type instanceof BoolType)
         	return 4;
+        if (type instanceof TypeList)
+        {
+        	int total = 0;
+        	for (types.Type t : (TypeList) type)
+        		total += numBytes(t);
+        	return total;
+        }
         
         throw new RuntimeException("No size known for " + type);
     }

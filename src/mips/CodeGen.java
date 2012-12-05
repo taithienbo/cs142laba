@@ -68,7 +68,6 @@ public class CodeGen implements ast.CommandVisitor {
 	{
 		this.tc = tc;
 		this.program = new Program();
-
 	}
 
 	public boolean hasError()
@@ -95,6 +94,7 @@ public class CodeGen implements ast.CommandVisitor {
 		{
 			currentFunction = ActivationRecord.newGlobalFrame();
 			ast.accept(this);
+			
 			return !hasError();
 		} 
 		catch (CodeGenException e) 
@@ -148,9 +148,9 @@ public class CodeGen implements ast.CommandVisitor {
 		// need to determine the boolean value to push onto the stack
 		Value boolVal = node.value();
 		String rd = makeTempRegister(regCounter);
-		if (boolVal == Value.FALSE)		// put -1 to represent false
-			program.appendInstruction("li " + rd + ", " + -1  
-					+ " # " + rd + " = -1");
+		if (boolVal == Value.FALSE)		// put 0 to represent false
+			program.appendInstruction("li " + rd + ", " + 0  
+					+ " # " + rd + " = 0");
 		else
 			program.appendInstruction("li " + rd + ", " + 1  
 					+ " # " + rd + " = 1");
@@ -177,7 +177,7 @@ public class CodeGen implements ast.CommandVisitor {
 	public void visit(LiteralInt node) 
 	{
 		String rd = makeTempRegister(regCounter);
-		program.appendInstruction("add " + rd + ", " + "$0" + node.value()
+		program.appendInstruction("add " + rd + ", " + "$0, " + node.value()
 					+ " # " + rd + " = " + node.value());
 		program.pushInt(rd);
 	}
@@ -207,6 +207,27 @@ public class CodeGen implements ast.CommandVisitor {
 		// symbol lookup to chain upwards. If a symbol isn't found in the 
 		// inner-most scope, a parent ActivationRecord supplies the address.
 		currentFunction = new ActivationRecord(node, currentFunction);
+		
+		int pos = program.appendInstruction(program.funcLabel(node.function().name()) + ":") + 1;
+		// since we do not have information about the variables or array 
+		// declarations local to this function until parsing the function's 
+		// body, we need to parse the body first and squeeze in the prologue
+		// after the label but before the function's body
+		node.body().accept(this);
+	
+		// squeeze in the prologue
+		program.insertPrologue(pos, currentFunction.stackSize());
+		program.appendEpilogue(currentFunction.stackSize());
+		
+		// if function is main, exit the program when done
+		if (node.function().name().equals("main"))
+		{
+			// insert mips instructions to exit the program
+			// li $v0, 10 # 10 is the exit syscall.
+			// syscall # do the syscall.
+			program.appendInstruction("li $v0, 10 ");
+			program.appendInstruction("syscall");
+		}
 	}
 
 	@Override
@@ -542,6 +563,7 @@ public class CodeGen implements ast.CommandVisitor {
 		
 		// do comparison using pseudo-instructions
 		// first compute 
+		program.appendInstruction("sub " + rd + ", " + rd + ", " + rs);
 		
 		throw new RuntimeException("Implement this");
 	}
@@ -565,12 +587,26 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(Call node) 
 	{
-		// ("jal...");
-		// return value
-		//...("adi, $sp, $sp, #")
-
-		throw new RuntimeException("Implement this");
+		// caller setup:
+		// caller evaluate the arguments and push them onto stack for callee
+		node.arguments().accept(this);
+		
+		// after evaluating the arguments, and placing them on the stack, the
+		// caller makes a call to the function "func". The jal opcode 
+		// automatically changes the return address register, $ra to hold the 
+		// instruction immediately following itself. When "func" has finished,
+		// that's exactly where the current function will pick up again.
+		
+		// jump to callee
+		program.appendInstruction("jal " + program.funcLabel(node.function().name()));	
+		// The caller now picks up execution where it left off. The arguments
+		// provided to the caller are no longer needed, and can be popped off
+		// the stack
+		program.appendInstruction("addi $sp, $sp, "
+					+ ActivationRecord.numBytes(tc.getType(node.arguments())));
 	}
+	
+	
 
 	@Override
 	public void visit(IfElseBranch node) {

@@ -27,6 +27,14 @@ public class Program {
         return "label." + labelCounter;
     }
     
+    public String funcLabel(String functionName)
+    {
+    	if (functionName.equals("main"))
+    		return functionName;
+    	
+    	return "func." + functionName;
+    }
+    
     // Insert an instruction into the code segment
     // Returns the position of the instruction in the stream
     public int appendInstruction(String instr)
@@ -59,7 +67,7 @@ public class Program {
     {
     	// first decrement stack pointer and then push (save) value to stack
     	appendAddInstruction("$sp", "$sp", (-1 * ActivationRecord.numBytes(intType)));
-    	appendSWInstruction(reg, "0($sp");
+    	appendSWInstruction(reg, "0($sp)");
     }
     
     // helper method for appending addi instruction: rt = rs + imm 
@@ -111,13 +119,15 @@ public class Program {
     // Insert a function prologue at position pos
     public void insertPrologue(int pos, int frameSize)
     {
+    	int currentCodeSegmentSize = codeSegment.size() -1;
+    	
         ArrayList<String> prologue = new ArrayList<String>();
        
         // caller first allocate some space for bookeeping values
         prologue.add("subu $sp, $sp, 8");
         // save caller's frame pointer and return address
         prologue.add("sw $fp, 0($sp)");
-        prologue.add("sw $ra, 0($sp)");
+        prologue.add("sw $ra, 4($sp)");
         // update frame pointer to reference the function's activation record
         prologue.add("addi $fp, $sp, 8");
         // reserve enough space on the stack to store all the variables and
