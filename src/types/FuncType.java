@@ -20,8 +20,8 @@ public class FuncType extends Type
    public Type call(Type that)
    {
 	   // can only call this function if the arguments of that match with the 
-	   // arguments of this
-	   return args.equivalent(that) ? this : super.call(that);
+	   // arguments of thi
+	   return args.equivalent(that) ? ret : super.call(that);
    }
    public TypeList arguments()
    {

@@ -580,7 +580,8 @@ public class CodeGen implements ast.CommandVisitor {
 	}
 
 	@Override
-	public void visit(Assignment node) {
+	public void visit(Assignment node) 
+	{
 		throw new RuntimeException("Implement this");
 	}
 
