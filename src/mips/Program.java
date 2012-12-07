@@ -106,15 +106,16 @@ public class Program {
     {
     	// opposite to push, increment stack pointer before loading value into
     	// register
-    	appendAddInstruction("$sp", "$sp", ActivationRecord.numBytes(intType));
     	appendLWInstruction(reg, "0($sp)");
+    	appendAddInstruction("$sp", "$sp", ActivationRecord.numBytes(intType));
     }
     
     // Pop a floating point value from the stack into register reg
     public void popFloat(String reg)
     {
+    	appendInstruction("lw " + reg + ", " + ("0$sp"));
     	appendAddInstruction("$sp", "$sp", ActivationRecord.numBytes(floatType));
-    	appendLWInstruction(reg, "0$sp");
+    	//appendLWInstruction(reg, "0$sp");
     }
     
     // Insert a function prologue at position pos

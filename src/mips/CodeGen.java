@@ -133,9 +133,23 @@ public class CodeGen implements ast.CommandVisitor {
 		// of array, it denotes the value for indexing into the array
 		// In either case, we treat AddressOf as an int or float and push
 		// onto the stack
-		String rd = makeAddresRegister(regCounter);
-		// push the address onto the stack
+		String rs = makeTempRegister(regCounter);
+		
+		currentFunction.getAddress(program, rs, node.symbol());
+		
+		// retrieve the value of address
+		regCounter++;
+		String rd = makeTempRegister(regCounter);
+		
+		program.appendInstruction("lw " + rd + ", " + "0(" +  rs + ")" 
+									+ " # retrieve address value in " + rs + "  and stored into " + rd );
+		
+		// push the value of address onto the stack
 		program.pushInt(rd);
+		
+		regCounter = 0;
+	
+		
 	}
 
 	@Override
@@ -185,6 +199,7 @@ public class CodeGen implements ast.CommandVisitor {
 		// notifies the current ActivationRecord object, which records an 
 		// offset (from the frame pointer) where the symbol will be stored at 
 		// runtime.
+		System.out.println("VariableDeclaration currently visit: " + node);
 		currentFunction.add(program, node);
 	}
 
@@ -567,15 +582,15 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(Dereference node) 
 	{
-		String ra = makeAddresRegister(regCounter);
+		String ra = makeTempRegister(regCounter);
 		
 		// call visit on expression to push the address onto the stack
-		
+		System.out.println("currently visiting Dereference " + node);
 		node.expression().accept(this);
 		
 		// pop the address off the stack (calling program.popInt() has the 
 		// effect of storing the value of the address into register ra
-		program.popInt(ra);
+	//	program.popInt(ra);
 	}
 
 	@Override
@@ -586,21 +601,20 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(Assignment node) 
 	{
-		String rd = makeAddresRegister(regCounter);
+		String rd = makeTempRegister(regCounter);
 		
 		// visit the destination to put the address of the destination onto 
 		// the stack
 		node.destination().accept(this);
-	
-		node.source().accept(this);
 		regCounter++;
-		
+		node.source().accept(this);
+
 		String rs = makeTempRegister(regCounter);
 		
 		program.popInt(rs);
 		program.popInt(rd);
 		
-		program.appendInstruction("sw " + rs + ", " + "0(" + rd + ")");
+		program.appendInstruction("sw " + rs + ", " +   "(" + rd + ")");//"cruxdata.addi");
 	
 		regCounter = 0;
 	}
@@ -608,7 +622,7 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(Call node) 
 	{
-		String rd = makeTempRegister(regCounter);
+		int regNum = regCounter;
 		
 		// caller setup:
 		// caller evaluate the arguments and push them onto stack for callee
@@ -622,16 +636,30 @@ public class CodeGen implements ast.CommandVisitor {
 		
 		// jump to callee
 		program.appendInstruction("jal " + program.funcLabel(node.function().name()));	
+	
 		// The caller now picks up execution where it left off. The arguments
 		// provided to the callee are no longer needed, and can be popped off
 		// the stack
 		program.appendInstruction("addi $sp, $sp, "
 					+ ActivationRecord.numBytes(tc.getType(node.arguments())));
 		
-		// if function returns something pop it off from stack 
-		if (! (node.function().type() instanceof VoidType))
-			program.popInt(rd);
-		
+		// if function is one of readInt() or readFloat() the result is in 
+		// $v0
+		if (node.function().name().equals("readInt") )
+		{
+			// push the result back onto stack
+			program.pushInt("$v0");
+		}
+		else if (node.function().name().equals("readFloat"))
+			program.pushFloat("$v0");
+		// if declared function has a return, pop it off from stack
+		else	if (! (node.function().type() instanceof VoidType))
+		{
+			if (node.function().type() instanceof FloatType)
+				program.popFloat(makeFloatRegister(regNum));
+			else
+				program.popInt(makeTempRegister(regNum));
+		}
 	}
 	
 	

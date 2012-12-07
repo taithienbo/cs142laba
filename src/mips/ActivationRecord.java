@@ -95,6 +95,7 @@ public class ActivationRecord
     	int space = numBytes(var.symbol().type());
     	stackSize += space;
     	locals.put(var.symbol(),space);
+    	System.out.println("adding " + var + " to locals");
     }
     
     public void add(Program prog, ast.ArrayDeclaration array)
@@ -113,8 +114,8 @@ public class ActivationRecord
     		// if this is in local (it is a variable), the address 
     		// is the position of the frame pointer -8 - the offset of the 
     		// variable
-    		prog.appendInstruction("addi " + reg + ", $fp, " 
-    						+ (fixedFrameSize -locals.get(sym)));
+    		prog.appendInstruction("subi " + reg + ", $fp, " 
+    						+ (-fixedFrameSize -locals.get(sym)));
     	}
     	else if (arguments.containsKey(sym))
     	{
@@ -122,6 +123,7 @@ public class ActivationRecord
     		// pointer, which point to the first argument + the offset of the 
     		// argument
     		prog.appendInstruction("addi " + reg + ", $fp, " + arguments.get(sym));
+    		System.out.println("in getAddress() found argument: " + sym + " at offset " + arguments.get(sym));
     	}
     	else
     		parent.getAddress(prog, reg, sym);
@@ -144,6 +146,8 @@ class GlobalFrame extends ActivationRecord
     {
     	prog.appendData(mangleDataname(var.symbol().name())
     			+ ": " + "	.space 	" +	numBytes(var.symbol().type()));
+    	
+    	System.out.println("adding " + var + " to global .data directive");
     }    
     
     @Override
@@ -156,6 +160,7 @@ class GlobalFrame extends ActivationRecord
     @Override
     public void getAddress(Program prog, String reg, Symbol sym)
     {
+    	System.out.println("retriving address " + sym + " in global and store into " + reg);
     	prog.appendInstruction("la " + reg + ", " + mangleDataname(sym.name()));
     }
 }
