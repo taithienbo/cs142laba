@@ -48,12 +48,8 @@ public class CodeGen implements ast.CommandVisitor {
 		return "$t" + regNum;
 	}
 
-	private String makeSavedRegister(int regNum)
-	{
-		return "$s" + regNum;
-	}
 
-	private String makeArgumentResiterCounter(int regNum)
+	private String makeAddresRegister(int regNum)
 	{
 		return "$a" + regNum;
 	}
@@ -137,7 +133,7 @@ public class CodeGen implements ast.CommandVisitor {
 		// of array, it denotes the value for indexing into the array
 		// In either case, we treat AddressOf as an int or float and push
 		// onto the stack
-		String rd = makeTempRegister(regCounter);
+		String rd = makeAddresRegister(regCounter);
 		// push the address onto the stack
 		program.pushInt(rd);
 	}
@@ -571,7 +567,15 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(Dereference node) 
 	{
-		throw new RuntimeException("Implement this");
+		String ra = makeAddresRegister(regCounter);
+		
+		// call visit on expression to push the address onto the stack
+		
+		node.expression().accept(this);
+		
+		// pop the address off the stack (calling program.popInt() has the 
+		// effect of storing the value of the address into register ra
+		program.popInt(ra);
 	}
 
 	@Override
@@ -582,12 +586,30 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(Assignment node) 
 	{
-		throw new RuntimeException("Implement this");
+		String rd = makeAddresRegister(regCounter);
+		
+		// visit the destination to put the address of the destination onto 
+		// the stack
+		node.destination().accept(this);
+	
+		node.source().accept(this);
+		regCounter++;
+		
+		String rs = makeTempRegister(regCounter);
+		
+		program.popInt(rs);
+		program.popInt(rd);
+		
+		program.appendInstruction("sw " + rs + ", " + "0(" + rd + ")");
+	
+		regCounter = 0;
 	}
 
 	@Override
 	public void visit(Call node) 
 	{
+		String rd = makeTempRegister(regCounter);
+		
 		// caller setup:
 		// caller evaluate the arguments and push them onto stack for callee
 		node.arguments().accept(this);
@@ -601,10 +623,15 @@ public class CodeGen implements ast.CommandVisitor {
 		// jump to callee
 		program.appendInstruction("jal " + program.funcLabel(node.function().name()));	
 		// The caller now picks up execution where it left off. The arguments
-		// provided to the caller are no longer needed, and can be popped off
+		// provided to the callee are no longer needed, and can be popped off
 		// the stack
 		program.appendInstruction("addi $sp, $sp, "
 					+ ActivationRecord.numBytes(tc.getType(node.arguments())));
+		
+		// if function returns something pop it off from stack 
+		if (! (node.function().type() instanceof VoidType))
+			program.popInt(rd);
+		
 	}
 	
 	
@@ -620,8 +647,24 @@ public class CodeGen implements ast.CommandVisitor {
 	}
 
 	@Override
-	public void visit(Return node) {
-		throw new RuntimeException("Implement this");
+	public void visit(Return node) 
+	{
+		// If the function called happens to have a return value it will be 
+		// found in register $v0. Following the stack machine execution 
+		// semantics, now is the time to push the return value on the stack. 
+		// Functions with void return type have no value to return, and so 
+		// would skip this step and not push anything onto the stack.
+		node.argument().accept(this);
+		
+		// pop off the arguments
+		program.appendInstruction("subu $sp, $sp, " 
+					+ 4 * ActivationRecord.numBytes(tc.getType((Command) node.argument())));
+		
+		// if the return type is not VoidType, store the return type into $v0 
+		// as consistent with mips covention. If return type is VoidType, do 
+		// not store the return; doing so may lead to stack misaligned 
+		if (! (tc.getType((Command)node.argument()) instanceof VoidType))
+			program.appendInstruction("sw $v0, 0($sp)");
 	}
 
 	@Override

@@ -107,7 +107,7 @@ public class Program {
     	// opposite to push, increment stack pointer before loading value into
     	// register
     	appendAddInstruction("$sp", "$sp", ActivationRecord.numBytes(intType));
-    	appendLWInstruction(reg, "0$sp");
+    	appendLWInstruction(reg, "0($sp)");
     }
     
     // Pop a floating point value from the stack into register reg
@@ -120,7 +120,6 @@ public class Program {
     // Insert a function prologue at position pos
     public void insertPrologue(int pos, int frameSize)
     {
-    	int currentCodeSegmentSize = codeSegment.size() -1;
     	
         ArrayList<String> prologue = new ArrayList<String>();
        
