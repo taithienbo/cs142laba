@@ -113,7 +113,7 @@ public class Program {
     // Pop a floating point value from the stack into register reg
     public void popFloat(String reg)
     {
-    	appendInstruction("lw " + reg + ", " + ("0$sp"));
+    	appendInstruction("l.s " + reg + ", " + ("0($sp)"));
     	appendAddInstruction("$sp", "$sp", ActivationRecord.numBytes(floatType));
     	//appendLWInstruction(reg, "0$sp");
     }

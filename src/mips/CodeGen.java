@@ -1,6 +1,11 @@
 package mips;
 
+import types.BoolType;
+import types.FloatType;
+import types.IntType;
+import types.Type;
 import types.TypeChecker;
+import types.VoidType;
 import ast.Addition;
 import ast.AddressOf;
 import ast.ArrayDeclaration;
@@ -8,6 +13,7 @@ import ast.Assignment;
 import ast.Call;
 import ast.Command;
 import ast.Comparison;
+import ast.Comparison.Operation;
 import ast.Declaration;
 import ast.DeclarationList;
 import ast.Dereference;
@@ -31,7 +37,6 @@ import ast.StatementList;
 import ast.Subtraction;
 import ast.VariableDeclaration;
 import ast.WhileLoop;
-import types .*;
 
 public class CodeGen implements ast.CommandVisitor {
 
@@ -219,6 +224,8 @@ public class CodeGen implements ast.CommandVisitor {
 		// inner-most scope, a parent ActivationRecord supplies the address.
 		currentFunction = new ActivationRecord(node, currentFunction);
 		
+		String rd = makeTempRegister(regCounter);
+		
 		int pos = program.appendInstruction(program.funcLabel(node.function().name()) + ":") + 1;
 		// since we do not have information about the variables or array 
 		// declarations local to this function until parsing the function's 
@@ -239,6 +246,7 @@ public class CodeGen implements ast.CommandVisitor {
 			program.appendInstruction("li $v0, 10 ");
 			program.appendInstruction("syscall");
 		}
+
 	}
 
 	@Override
@@ -561,9 +569,11 @@ public class CodeGen implements ast.CommandVisitor {
 	@Override
 	public void visit(Comparison node) 
 	{
-		String rd = makeTempRegister(regCounter++);
+		String rd = makeTempRegister(regCounter);
 		// push left
 		node.leftSide().accept(this);
+		regCounter++;
+		
 		String rs = makeTempRegister(regCounter);
 		// push right
 		node.rightSide().accept(this);
@@ -572,11 +582,36 @@ public class CodeGen implements ast.CommandVisitor {
 		// pop left
 		program.popInt(rd);
 		
-		// do comparison using pseudo-instructions
-		// first compute 
-		program.appendInstruction("sub " + rd + ", " + rd + ", " + rs);
+		String conditionTrue = program.newLabel();
 		
-		throw new RuntimeException("Implement this");
+		// check the comparison operation
+		Operation operation = node.operation();
+	
+		if (operation == Operation.EQ)
+			program.appendInstruction("beg " + rd + ", " + rs + ", " + conditionTrue);
+		else if (operation ==  Operation.GE)
+			program.appendInstruction("bge " + rd + ", " + rs + ", " + conditionTrue);
+		else if (operation ==  Operation.GT)
+			program.appendInstruction("bgt " + rd + ", " + rs + ", " + conditionTrue);
+		else if (operation ==  Operation.LE)
+			program.appendInstruction("ble " + rd + ", " + rs + ", " + conditionTrue);
+		else if (operation ==  Operation.LT)
+			program.appendInstruction("blt " + rd + ", " + rs + ", " + conditionTrue);
+		else if (operation ==  Operation.NE)
+			program.appendInstruction("bne " + rd + ", " + rs + ", " + conditionTrue);
+		
+		// store 0 to indicate condition false and push 
+		program.appendInstruction("li " + rd + ", " + 0);
+		program.pushInt(rd);
+		
+		// insert codes for condition true
+		program.appendInstruction(conditionTrue + ":");
+		
+		// push 1 to indicate condition true 
+		program.appendInstruction("li " + rd + ", " + 1);
+		program.pushInt(rd);
+		
+		regCounter = 0;
 	}
 
 	@Override
@@ -643,30 +678,59 @@ public class CodeGen implements ast.CommandVisitor {
 		program.appendInstruction("addi $sp, $sp, "
 					+ ActivationRecord.numBytes(tc.getType(node.arguments())));
 		
-		// if function is one of readInt() or readFloat() the result is in 
-		// $v0
-		if (node.function().name().equals("readInt") )
+		if (!(node.function().type() instanceof VoidType))
 		{
-			// push the result back onto stack
-			program.pushInt("$v0");
-		}
-		else if (node.function().name().equals("readFloat"))
-			program.pushFloat("$v0");
-		// if declared function has a return, pop it off from stack
-		else	if (! (node.function().type() instanceof VoidType))
-		{
-			if (node.function().type() instanceof FloatType)
-				program.popFloat(makeFloatRegister(regNum));
-			else
-				program.popInt(makeTempRegister(regNum));
+			// if function is one of readInt() or readFloat() then need to 
+			// push value in $v0 back onto stack
+			if (node.function().name().equals("readInt") )
+				program.pushInt("$v0");
+			else if (node.function().name().equals("readFloat"))
+				program.pushFloat("$v0");
+			
+			// if declared function has a return, pop it off from stack
+			if (! (node.function().type() instanceof VoidType))
+			{
+				if (node.function().type() instanceof FloatType)
+					program.popFloat(makeFloatRegister(regNum));
+				else
+					program.popInt(makeTempRegister(regNum));
+			}
 		}
 	}
 	
-	
-
 	@Override
-	public void visit(IfElseBranch node) {
-		throw new RuntimeException("Implement this");
+	public void visit(IfElseBranch node) 
+	{
+			String condReg = makeTempRegister(regCounter);
+			// push the condition onto the stack
+			node.condition().accept(this);
+			regCounter++;
+			// pop the result of the boolean condition
+			program.popInt(condReg);
+			
+			// branch to then clause or else clause based on condition 
+			// (true = 1, false = 0)
+			String labelTrue = program.newLabel();
+			String labelJoint = program.newLabel();
+			
+			program.appendInstruction("bgtz " + condReg + ", " + labelTrue);
+			
+			// insert codes for else branch
+			node.elseBlock().accept(this);
+			// in case there is no else statement, and condition is false, need
+			// to have a joint label  to avoid incorrectly executing codes in
+			// the then clause
+			program.appendInstruction("b " + labelJoint);
+			
+			// insert codes for then clause
+			program.appendInstruction(labelTrue + ":");
+			node.thenBlock().accept(this);
+			program.appendInstruction("b " + labelJoint);
+			
+			// insert joint label
+			program.appendInstruction(labelJoint + ":");
+			
+			regCounter = 0;
 	}
 
 	@Override
@@ -683,17 +747,10 @@ public class CodeGen implements ast.CommandVisitor {
 		// Functions with void return type have no value to return, and so 
 		// would skip this step and not push anything onto the stack.
 		node.argument().accept(this);
-		
-		// pop off the arguments
-		program.appendInstruction("subu $sp, $sp, " 
-					+ 4 * ActivationRecord.numBytes(tc.getType((Command) node.argument())));
-		
-		// if the return type is not VoidType, store the return type into $v0 
-		// as consistent with mips covention. If return type is VoidType, do 
-		// not store the return; doing so may lead to stack misaligned 
-		if (! (tc.getType((Command)node.argument()) instanceof VoidType))
-			program.appendInstruction("sw $v0, 0($sp)");
 	}
+	
+		
+
 
 	@Override
 	public void visit(ast.Error node) 
